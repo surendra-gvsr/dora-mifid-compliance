@@ -1,5 +1,8 @@
 # 🔏 DORA & MiFID II Compliance-as-Code
 
+**🌐 Live Demo:** [dora-mifid-compliance.vercel.app](https://dora-mifid-compliance.vercel.app)  
+**📦 GitHub:** [github.com/surendra-gvsr/dora-mifid-compliance](https://github.com/surendra-gvsr/dora-mifid-compliance)
+
 > An agentic RAG system that maps ICT security controls to EU financial regulations in real time — complete with gap analysis, compliance scoring, and tamper-proof forensic audit trails.
 
 [![Python](https://img.shields.io/badge/Python-3.11+-blue?logo=python)](https://python.org)
