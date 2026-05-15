@@ -23,10 +23,15 @@ class User(Base):
 
 
 def _get_database_url() -> str:
-    url = os.getenv("DATABASE_URL", "sqlite:///./compliance.db")
-    if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
-    return url
+    url = os.getenv("DATABASE_URL")
+    if url:
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return url
+    # Vercel (and Lambda-like) serverless: only /tmp is writable
+    if os.getenv("VERCEL") or os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+        return "sqlite:////tmp/compliance.db"
+    return "sqlite:///./compliance.db"
 
 
 _db_url = _get_database_url()
