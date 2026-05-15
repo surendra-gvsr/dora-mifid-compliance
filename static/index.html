@@ -568,7 +568,9 @@
     <!-- Summary -->
     <div x-show="analyzeResult?.analysis?.summary" x-cloak class="doc-card p-10 fade text-center bg-aged">
       <p class="eyebrow mb-4">Executive summary · For the record</p>
-      <p class="display text-2xl font-light leading-snug max-w-2xl mx-auto" style="color:var(--ink)" x-text="'"'+analyzeResult?.analysis?.summary+'"'"></p>
+      <p class="display text-2xl font-light leading-snug max-w-2xl mx-auto" style="color:var(--ink)">
+        <span class="text-stamp">“</span><span x-text="analyzeResult?.analysis?.summary"></span><span class="text-stamp">”</span>
+      </p>
       <div class="mt-6 inline-block">
         <div class="rule" style="width:80px;margin:0 auto 12px"></div>
         <p class="stamp-font text-xs uppercase tracking-widest" style="color:var(--stamp-deep)">Submitted by the agent of record</p>
