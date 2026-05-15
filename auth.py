@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 JWT_SECRET = os.getenv("JWT_SECRET", "dora_compliance_jwt_secret_2025")
 JWT_ALGORITHM = "HS256"
 
-security = HTTPBasic()
+security = HTTPBasic(auto_error=False)    # don't 401 when Bearer token is used
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
