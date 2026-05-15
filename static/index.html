@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>DORA & MiFID II Compliance-as-Code</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    [x-cloak]{display:none!important}
+    .gradient-text{background:linear-gradient(135deg,#60a5fa,#a78bfa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .card{background:rgba(15,23,42,0.8);border:1px solid rgba(99,102,241,0.2);backdrop-filter:blur(12px)}
+    .glow{box-shadow:0 0 30px rgba(99,102,241,0.15)}
+    .tag-implemented{background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3)}
+    .tag-partial{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)}
+    .tag-gap{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+    .tag-high{background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3)}
+    .tag-medium{background:rgba(251,191,36,0.15);color:#fbbf24;border:1px solid rgba(251,191,36,0.3)}
+    .tag-low{background:rgba(52,211,153,0.15);color:#34d399;border:1px solid rgba(52,211,153,0.3)}
+    body{background:#020817;color:#e2e8f0;font-family:'Inter',system-ui,sans-serif}
+    .bg-grid{background-image:linear-gradient(rgba(99,102,241,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.05) 1px,transparent 1px);background-size:50px 50px}
+    .step-line{border-left:2px solid rgba(99,102,241,0.3);margin-left:1rem}
+    .typing::after{content:'|';animation:blink 1s step-end infinite}
+    @keyframes blink{50%{opacity:0}}
+    .score-ring{stroke-dasharray:283;stroke-dashoffset:283;transition:stroke-dashoffset 1.5s ease;transform:rotate(-90deg);transform-origin:50% 50%}
+    pre{white-space:pre-wrap;word-break:break-all}
+    ::-webkit-scrollbar{width:4px;height:4px}
+    ::-webkit-scrollbar-track{background:#0f172a}
+    ::-webkit-scrollbar-thumb{background:#4338ca;border-radius:2px}
+  </style>
+</head>
+<body class="bg-grid min-h-screen" x-data="app()" x-init="init()">
+
+<!-- ── NAV ── -->
+<nav class="border-b border-indigo-900/40 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-16">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">C²</div>
+      <span class="font-semibold text-white text-sm tracking-tight">DORA <span class="text-indigo-400">&amp;</span> MiFID II</span>
+      <span class="hidden sm:inline text-xs text-slate-500 border border-slate-700 rounded px-2 py-0.5 ml-1">Compliance-as-Code</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span x-show="token" class="text-xs text-emerald-400 flex items-center gap-1">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Authenticated
+      </span>
+      <button @click="showAuth=true" x-show="!token" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-md transition">Sign In</button>
+      <button @click="logout()" x-show="token" class="text-xs text-slate-400 hover:text-white transition">Sign Out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 text-center">
+  <div class="inline-flex items-center gap-2 bg-indigo-950/60 border border-indigo-700/40 rounded-full px-4 py-1.5 text-xs text-indigo-300 mb-6">
+    <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+    Agentic RAG · MCP Tool Registry · Semantic Kill-Switch · Forensic Snapshots
+  </div>
+  <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-4">
+    Regulatory Compliance<br><span class="gradient-text">Automated by AI</span>
+  </h1>
+  <p class="text-slate-400 text-lg max-w-2xl mx-auto mb-8">
+    An agentic system that maps your ICT security controls to <strong class="text-slate-200">DORA</strong> and <strong class="text-slate-200">MiFID II</strong> articles in real time — complete with gap analysis, compliance scoring, and tamper-proof forensic audit trails.
+  </p>
+  <div class="flex flex-wrap justify-center gap-3 text-sm">
+    <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2">
+      <span class="text-indigo-400">⚡</span><span class="text-slate-300">ReAct Agent Loop</span>
+    </div>
+    <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2">
+      <span class="text-purple-400">🔌</span><span class="text-slate-300">MCP Tool Protocol</span>
+    </div>
+    <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2">
+      <span class="text-red-400">🛡</span><span class="text-slate-300">PII Semantic Kill-Switch</span>
+    </div>
+    <div class="flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-lg px-4 py-2">
+      <span class="text-emerald-400">🔏</span><span class="text-slate-300">SHA-256 Forensic Snapshots</span>
+    </div>
+  </div>
+</section>
+
+<!-- ── TABS ── -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8">
+  <div class="flex gap-1 bg-slate-900/60 border border-slate-800 rounded-xl p-1 w-fit mx-auto">
+    <template x-for="tab in tabs" :key="tab.id">
+      <button @click="activeTab=tab.id"
+        :class="activeTab===tab.id ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'"
+        class="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-2">
+        <span x-text="tab.icon"></span><span x-text="tab.label"></span>
+      </button>
+    </template>
+  </div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+
+  <!-- ANALYZER TAB -->
+  <div x-show="activeTab==='analyze'" x-cloak class="grid lg:grid-cols-5 gap-6">
+    <!-- Form -->
+    <div class="lg:col-span-2 space-y-4">
+      <div class="card rounded-2xl p-6 glow">
+        <h2 class="text-white font-semibold text-lg mb-1">Compliance Analyzer</h2>
+        <p class="text-slate-500 text-sm mb-6">Describe your compliance question and the agent will map your controls, identify gaps, and produce a forensic receipt.</p>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs text-slate-400 mb-1.5">Query</label>
+            <textarea x-model="analyzeForm.query" rows="3" placeholder="Map our ICT controls to DORA Article 9 and identify any gaps"
+              class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 resize-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1.5">Regulation</label>
+            <select x-model="analyzeForm.regulation" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+              <option value="DORA">DORA — Digital Operational Resilience Act</option>
+              <option value="MIFID_II">MiFID II — Article 16</option>
+              <option value="BOTH">Both Regulations</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-400 mb-1.5">Clearance Level</label>
+            <select x-model="analyzeForm.clearance_level" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+              <option value="ANALYST">Analyst — no PII access</option>
+              <option value="COMPLIANCE_OFFICER">Compliance Officer — medium PII</option>
+              <option value="DPO">DPO — full access (anonymised)</option>
+            </select>
+          </div>
+          <button @click="runAnalysis()" :disabled="loading.analyze || !token"
+            class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-medium py-2.5 rounded-lg transition flex items-center justify-center gap-2 text-sm">
+            <svg x-show="loading.analyze" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+            <span x-text="loading.analyze ? 'Agent thinking…' : 'Run Analysis'"></span>
+          </button>
+          <p x-show="!token" class="text-xs text-amber-400 text-center">Sign in to run analysis</p>
+        </div>
+      </div>
+
+      <!-- Score card -->
+      <div x-show="analyzeResult" x-cloak class="card rounded-2xl p-6">
+        <p class="text-xs text-slate-500 uppercase tracking-wider mb-4">Compliance Score</p>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-5xl font-bold" :class="scoreColor(analyzeResult?.analysis?.compliance_score)">
+              <span x-text="analyzeResult?.analysis?.compliance_score?.toFixed(1)"></span><span class="text-2xl">%</span>
+            </p>
+            <p class="text-slate-500 text-sm mt-1" x-text="scoreLabel(analyzeResult?.analysis?.compliance_score)"></p>
+          </div>
+          <svg width="80" height="80" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="45" fill="none" stroke="#1e293b" stroke-width="8"/>
+            <circle cx="50" cy="50" r="45" fill="none" stroke-width="8"
+              :stroke="scoreHex(analyzeResult?.analysis?.compliance_score)"
+              class="score-ring"
+              :style="`stroke-dashoffset:${283-(283*(analyzeResult?.analysis?.compliance_score||0)/100)}`"/>
+          </svg>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-800">
+          <p class="text-xs text-slate-400 flex items-center gap-1.5">
+            <span class="text-emerald-400">🔏</span>
+            Snapshot: <span class="font-mono text-indigo-300 text-xs truncate" x-text="analyzeResult?.snapshot?.snapshot_id?.substring(0,16)+'...'"></span>
+          </p>
+          <p class="text-xs mt-1" :class="analyzeResult?.snapshot?.integrity_verified ? 'text-emerald-400' : 'text-red-400'">
+            <span x-text="analyzeResult?.snapshot?.integrity_verified ? '✓ Integrity verified (SHA-256)' : '✗ Integrity check failed'"></span>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="lg:col-span-3 space-y-4">
+      <!-- Agent Steps -->
+      <div x-show="analyzeResult" x-cloak class="card rounded-2xl p-6">
+        <h3 class="text-white font-medium mb-4 flex items-center gap-2">
+          <span class="text-indigo-400">⚡</span> Agent Reasoning Steps
+        </h3>
+        <div class="step-line space-y-4 pl-4">
+          <template x-for="(step, i) in analyzeResult?.agent_steps || []" :key="i">
+            <div class="relative">
+              <div class="absolute -left-5 w-3 h-3 rounded-full bg-indigo-600 border-2 border-slate-950"></div>
+              <div class="bg-slate-900/60 rounded-lg p-3 border border-slate-800">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-xs font-mono bg-indigo-900/50 text-indigo-300 px-2 py-0.5 rounded" x-text="`Step ${step.step_number}`"></span>
+                  <span class="text-xs font-mono text-purple-300 bg-purple-900/30 px-2 py-0.5 rounded" x-text="step.action"></span>
+                </div>
+                <p class="text-xs text-slate-400 mb-1"><span class="text-slate-500">Thought: </span><span x-text="step.thought"></span></p>
+                <p class="text-xs text-slate-500 mt-1 font-mono truncate" x-text="'Obs: '+step.observation?.substring(0,120)+'…'"></p>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Gap Analysis -->
+      <div x-show="analyzeResult?.analysis?.gap_analysis?.length" x-cloak class="card rounded-2xl p-6">
+        <h3 class="text-white font-medium mb-4 flex items-center gap-2">
+          <span class="text-amber-400">⚠</span> Gap Analysis
+        </h3>
+        <div class="space-y-3">
+          <template x-for="(gap, i) in analyzeResult?.analysis?.gap_analysis || []" :key="i">
+            <div class="bg-amber-950/20 border border-amber-800/30 rounded-lg p-3">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-xs tag-partial px-2 py-0.5 rounded font-mono" x-text="gap.article"></span>
+              </div>
+              <p class="text-xs text-slate-300 mb-1" x-text="gap.requirement"></p>
+              <p class="text-xs text-amber-400/80" x-text="gap.gap"></p>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Matched Controls -->
+      <div x-show="analyzeResult?.analysis?.matched_controls?.length" x-cloak class="card rounded-2xl p-6">
+        <h3 class="text-white font-medium mb-4 flex items-center gap-2">
+          <span class="text-emerald-400">✓</span> Matched Controls
+        </h3>
+        <div class="space-y-2">
+          <template x-for="(ctrl, i) in analyzeResult?.analysis?.matched_controls || []" :key="i">
+            <div class="flex items-center justify-between bg-slate-900/60 rounded-lg p-3 border border-slate-800">
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-mono text-indigo-300 bg-indigo-900/30 px-2 py-0.5 rounded" x-text="ctrl.control_id"></span>
+                <span class="text-sm text-slate-300" x-text="ctrl.control_name"></span>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded" :class="`tag-${ctrl.status}`" x-text="ctrl.status"></span>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div x-show="analyzeResult?.analysis?.summary" x-cloak class="card rounded-2xl p-6 border-indigo-700/30">
+        <h3 class="text-white font-medium mb-3 flex items-center gap-2">
+          <span class="text-indigo-400">📋</span> Executive Summary
+        </h3>
+        <p class="text-slate-300 text-sm leading-relaxed" x-text="analyzeResult?.analysis?.summary"></p>
+      </div>
+
+      <!-- Empty state -->
+      <div x-show="!analyzeResult && !loading.analyze" class="card rounded-2xl p-16 text-center">
+        <div class="text-5xl mb-4">🔍</div>
+        <p class="text-slate-400 text-sm">Run an analysis to see the agent reasoning, gap report, and forensic snapshot.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PII KILL-SWITCH TAB -->
+  <div x-show="activeTab==='pii'" x-cloak class="grid lg:grid-cols-2 gap-6">
+    <div class="card rounded-2xl p-6 glow">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-red-900/50 flex items-center justify-center text-lg">🛡</div>
+        <div>
+          <h2 class="text-white font-semibold">Semantic Kill-Switch</h2>
+          <p class="text-slate-500 text-xs">PII detection & clearance enforcement</p>
+        </div>
+      </div>
+      <p class="text-slate-400 text-sm mb-6">Paste any text. The system scans for PII in-flight and blocks or anonymises it based on your clearance level — <em>before</em> it ever reaches the LLM.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1.5">Text to scan</label>
+          <textarea x-model="piiForm.text" rows="4" placeholder="Contact John Smith at j.smith@barclays.com or call +44 7911 123456. Account: GB29NWBK60161331926819"
+            class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-red-500 resize-none font-mono"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1.5">Clearance Level</label>
+          <div class="grid grid-cols-3 gap-2">
+            <template x-for="lvl in ['ANALYST','COMPLIANCE_OFFICER','DPO']" :key="lvl">
+              <button @click="piiForm.clearance_level=lvl"
+                :class="piiForm.clearance_level===lvl ? 'bg-indigo-600 border-indigo-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'"
+                class="border rounded-lg p-2 text-xs font-medium transition">
+                <span x-text="lvl==='COMPLIANCE_OFFICER'?'CMPL. OFFICER':lvl"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+        <button @click="runPiiScan()" :disabled="loading.pii || !token"
+          class="w-full bg-red-700 hover:bg-red-600 disabled:opacity-40 text-white font-medium py-2.5 rounded-lg transition flex items-center justify-center gap-2 text-sm">
+          <svg x-show="loading.pii" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          <span x-text="loading.pii ? 'Scanning…' : 'Scan for PII'"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div x-show="piiResult" x-cloak class="card rounded-2xl p-6">
+        <!-- Verdict banner -->
+        <div :class="piiResult?.access_blocked ? 'bg-red-950/40 border-red-700/40' : piiResult?.pii_found ? 'bg-amber-950/40 border-amber-700/40' : 'bg-emerald-950/40 border-emerald-700/40'"
+          class="rounded-xl border p-4 mb-4 flex items-center gap-3">
+          <span class="text-2xl" x-text="piiResult?.access_blocked ? '🚫' : piiResult?.pii_found ? '⚠' : '✅'"></span>
+          <div>
+            <p class="font-semibold text-white text-sm" x-text="piiResult?.access_blocked ? 'ACCESS BLOCKED' : piiResult?.pii_found ? 'PII DETECTED — ANONYMISED' : 'No PII Found'"></p>
+            <p class="text-xs text-slate-400 mt-0.5" x-text="piiResult?.kill_switch_message || (piiResult?.pii_found ? `${piiResult?.entity_count} entit${piiResult?.entity_count===1?'y':'ies'} redacted` : 'Text is clean')"></p>
+          </div>
+        </div>
+
+        <!-- Stats row -->
+        <div class="grid grid-cols-3 gap-3 mb-4">
+          <div class="bg-slate-900 rounded-lg p-3 text-center">
+            <p class="text-lg font-bold text-white" x-text="piiResult?.entity_count||0"></p>
+            <p class="text-xs text-slate-500">Entities</p>
+          </div>
+          <div class="bg-slate-900 rounded-lg p-3 text-center">
+            <p class="text-sm font-bold px-2 py-0.5 rounded inline-block" :class="`tag-${(piiResult?.risk_level||'low').toLowerCase()}`" x-text="piiResult?.risk_level||'LOW'"></p>
+            <p class="text-xs text-slate-500 mt-1">Risk Level</p>
+          </div>
+          <div class="bg-slate-900 rounded-lg p-3 text-center">
+            <p class="text-sm font-bold text-white" x-text="(piiResult?.entity_types||[]).join(', ')||'—'"></p>
+            <p class="text-xs text-slate-500">Types Found</p>
+          </div>
+        </div>
+
+        <!-- Anonymised output -->
+        <div x-show="piiResult?.anonymized_text" class="bg-slate-950 rounded-lg p-3 border border-slate-800">
+          <p class="text-xs text-slate-500 mb-2 font-medium">ANONYMISED OUTPUT</p>
+          <pre class="text-xs text-emerald-300 font-mono" x-text="piiResult?.anonymized_text"></pre>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="card rounded-2xl p-6">
+        <h3 class="text-white font-medium mb-4">How the Kill-Switch Works</h3>
+        <div class="space-y-3 text-sm">
+          <div class="flex gap-3"><span class="text-indigo-400 font-mono text-xs mt-0.5">01</span><div><p class="text-slate-300 font-medium">Regex Phase</p><p class="text-slate-500 text-xs">Scans for IBANs, emails, phones, national IDs with compiled patterns — zero LLM cost</p></div></div>
+          <div class="flex gap-3"><span class="text-indigo-400 font-mono text-xs mt-0.5">02</span><div><p class="text-slate-300 font-medium">Name Detection</p><p class="text-slate-500 text-xs">Heuristic + optional LLM scan for person names in contact-field contexts</p></div></div>
+          <div class="flex gap-3"><span class="text-indigo-400 font-mono text-xs mt-0.5">03</span><div><p class="text-slate-300 font-medium">Clearance Enforcement</p><p class="text-slate-500 text-xs">Risk level vs clearance matrix — blocks if insufficient access, anonymises otherwise</p></div></div>
+          <div class="flex gap-3"><span class="text-indigo-400 font-mono text-xs mt-0.5">04</span><div><p class="text-slate-300 font-medium">In-flight Intercept</p><p class="text-slate-500 text-xs">Fires between MCP tool result and LLM context — the LLM never sees raw PII</p></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLS TAB -->
+  <div x-show="activeTab==='controls'" x-cloak>
+    <div class="flex flex-col sm:flex-row gap-3 mb-6">
+      <input x-model="controlFilter.article" placeholder="Filter by article (e.g. Art.9)"
+        class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 w-full sm:w-48"/>
+      <select x-model="controlFilter.status" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 w-full sm:w-48">
+        <option value="">All statuses</option>
+        <option value="implemented">Implemented</option>
+        <option value="partial">Partial</option>
+        <option value="gap">Gap</option>
+      </select>
+      <select x-model="controlFilter.type" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 w-full sm:w-48">
+        <option value="">All types</option>
+        <option value="preventive">Preventive</option>
+        <option value="detective">Detective</option>
+        <option value="corrective">Corrective</option>
+      </select>
+      <button @click="loadControls()" :disabled="!token" class="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm transition">Apply</button>
+    </div>
+
+    <div x-show="loading.controls" class="text-center py-12 text-slate-500">Loading controls…</div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <template x-for="ctrl in controls" :key="ctrl.id">
+        <div class="card rounded-2xl p-5 hover:border-indigo-600/40 transition-all duration-200 cursor-default">
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-xs text-indigo-300 bg-indigo-900/40 px-2 py-0.5 rounded" x-text="ctrl.id"></span>
+              <span class="text-xs px-2 py-0.5 rounded capitalize" :class="`tag-${ctrl.status}`" x-text="ctrl.status"></span>
+            </div>
+            <span class="text-xs text-slate-600 font-mono" x-text="'v'+ctrl.version"></span>
+          </div>
+          <h3 class="text-white font-medium text-sm mb-2 leading-snug" x-text="ctrl.name"></h3>
+          <p class="text-slate-500 text-xs leading-relaxed line-clamp-2 mb-3" x-text="ctrl.description"></p>
+          <div class="flex flex-wrap gap-1">
+            <template x-for="a in (ctrl.dora_articles||[])" :key="a">
+              <span class="text-xs bg-blue-900/30 text-blue-400 border border-blue-800/40 px-1.5 py-0.5 rounded font-mono" x-text="a"></span>
+            </template>
+            <template x-for="a in (ctrl.mifid_articles||[])" :key="a">
+              <span class="text-xs bg-purple-900/30 text-purple-400 border border-purple-800/40 px-1.5 py-0.5 rounded font-mono" x-text="a"></span>
+            </template>
+            <span class="text-xs bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded capitalize" x-text="ctrl.control_type"></span>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-800 flex items-center gap-2 text-xs text-slate-600">
+            <span>👤</span><span x-text="ctrl.owner"></span>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div x-show="!token && !loading.controls" class="card rounded-2xl p-16 text-center">
+      <div class="text-4xl mb-3">🔒</div>
+      <p class="text-slate-400 text-sm">Sign in to browse the ICT controls database.</p>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE TAB -->
+  <div x-show="activeTab==='arch'" x-cloak class="space-y-6">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <template x-for="c in archCards" :key="c.title">
+        <div class="card rounded-2xl p-5 hover:border-indigo-600/40 transition-all">
+          <div class="text-3xl mb-3" x-text="c.icon"></div>
+          <h3 class="text-white font-semibold mb-1" x-text="c.title"></h3>
+          <p class="text-slate-400 text-xs leading-relaxed mb-3" x-text="c.desc"></p>
+          <div class="flex flex-wrap gap-1">
+            <template x-for="t in c.tags" :key="t">
+              <span class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded" x-text="t"></span>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <!-- Flow diagram -->
+    <div class="card rounded-2xl p-6">
+      <h3 class="text-white font-semibold mb-6 text-center">Request Flow</h3>
+      <div class="flex flex-wrap items-center justify-center gap-2 text-sm">
+        <template x-for="(node, i) in flowNodes" :key="i">
+          <div class="flex items-center gap-2">
+            <div :class="node.color" class="rounded-xl px-4 py-3 text-center min-w-[110px]">
+              <div class="text-lg mb-1" x-text="node.icon"></div>
+              <div class="text-xs font-medium text-white leading-tight" x-text="node.label"></div>
+            </div>
+            <svg x-show="i < flowNodes.length-1" class="text-slate-600 shrink-0" width="20" height="20" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2" d="M5 12h14m-7-7 7 7-7 7"/></svg>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <!-- Regulation Cards -->
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div class="card rounded-2xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-blue-900/50 flex items-center justify-center text-xl">🇪🇺</div>
+          <div><h3 class="text-white font-semibold">DORA</h3><p class="text-slate-500 text-xs">Digital Operational Resilience Act</p></div>
+        </div>
+        <div class="space-y-2">
+          <template x-for="art in ['Art.5 — ICT Risk Management Framework','Art.6 — ICT Systems & Tools','Art.7 — Third-Party Risk','Art.9 — Protection & Prevention','Art.11 — Business Continuity','Art.17 — Incident Management']" :key="art">
+            <div class="flex items-center gap-2 text-xs text-slate-400"><span class="text-blue-400">▸</span><span x-text="art"></span></div>
+          </template>
+        </div>
+      </div>
+      <div class="card rounded-2xl p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-xl bg-purple-900/50 flex items-center justify-center text-xl">📊</div>
+          <div><h3 class="text-white font-semibold">MiFID II</h3><p class="text-slate-500 text-xs">Markets in Financial Instruments Directive</p></div>
+        </div>
+        <div class="space-y-2">
+          <template x-for="req in ['Art.16 — Organisational Requirements','Adequate ICT infrastructure','Effective risk monitoring controls','Business continuity for ICT disruption','Documented lines of ICT responsibility','Information processing safeguards']" :key="req">
+            <div class="flex items-center gap-2 text-xs text-slate-400"><span class="text-purple-400">▸</span><span x-text="req"></span></div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ── AUTH MODAL ── -->
+<div x-show="showAuth" x-cloak class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4" @click.self="showAuth=false">
+  <div class="card rounded-2xl p-8 w-full max-w-md" @click.stop>
+    <h2 class="text-white font-bold text-xl mb-1" x-text="authMode==='login' ? 'Sign In' : 'Create Account'"></h2>
+    <p class="text-slate-500 text-sm mb-6">Access the compliance analysis tools</p>
+    <div class="space-y-3">
+      <template x-if="authMode==='register'">
+        <div class="grid grid-cols-2 gap-3">
+          <input x-model="authForm.first_name" placeholder="First name" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"/>
+          <input x-model="authForm.last_name" placeholder="Last name" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"/>
+        </div>
+      </template>
+      <input x-model="authForm.user_id" placeholder="Email address" type="email" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"/>
+      <input x-model="authForm.password" placeholder="Password" type="password" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"/>
+      <div x-show="authError" class="bg-red-950/40 border border-red-700/40 rounded-lg px-3 py-2 text-xs text-red-400" x-text="authError"></div>
+      <button @click="submitAuth()" :disabled="loading.auth" class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white font-medium py-2.5 rounded-lg transition text-sm">
+        <span x-text="loading.auth ? 'Please wait…' : (authMode==='login' ? 'Sign In' : 'Create Account')"></span>
+      </button>
+      <p class="text-center text-xs text-slate-500">
+        <span x-text="authMode==='login' ? 'No account? ' : 'Already have one? '"></span>
+        <button @click="authMode=authMode==='login'?'register':'login'; authError=''" class="text-indigo-400 hover:text-indigo-300 transition" x-text="authMode==='login'?'Register':'Sign In'"></button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer class="border-t border-slate-800/50 py-8 mt-8">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+    <span>DORA & MiFID II Compliance-as-Code · RegTech Demo</span>
+    <div class="flex items-center gap-4">
+      <span>FastAPI · SQLAlchemy · Agentic RAG · MCP</span>
+      <a href="/docs" target="_blank" class="text-indigo-500 hover:text-indigo-400 transition">API Docs ↗</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function app(){
+  return {
+    token: localStorage.getItem('token')||'',
+    activeTab:'analyze',
+    showAuth:false,
+    authMode:'login',
+    authForm:{user_id:'',password:'',first_name:'',last_name:''},
+    authError:'',
+    analyzeForm:{query:'Map our ICT controls to DORA Article 9 and identify any gaps',regulation:'DORA',clearance_level:'COMPLIANCE_OFFICER'},
+    analyzeResult:null,
+    piiForm:{text:'Contact John Smith at j.smith@barclays.com or IBAN GB29NWBK60161331926819',clearance_level:'ANALYST'},
+    piiResult:null,
+    controls:[],
+    controlFilter:{article:'',status:'',type:''},
+    loading:{analyze:false,pii:false,controls:false,auth:false},
+    tabs:[
+      {id:'analyze',label:'Analyzer',icon:'⚡'},
+      {id:'pii',label:'PII Kill-Switch',icon:'🛡'},
+      {id:'controls',label:'ICT Controls',icon:'📋'},
+      {id:'arch',label:'Architecture',icon:'🏗'},
+    ],
+    archCards:[
+      {icon:'🤖',title:'ReAct Agent',desc:'Multi-step Reason+Act loop: the LLM plans which MCP tool to call, observes the result, and iterates until it can produce a final answer.',tags:['LLM','Tool-use','Loop']},
+      {icon:'🔌',title:'MCP Registry',desc:'In-process Model Context Protocol tool registry. Agent calls tools by name — query_controls_db, get_dora_article, store_forensic_snapshot.',tags:['MCP','Tools','Protocol']},
+      {icon:'🛡',title:'PII Kill-Switch',desc:'Regex + heuristic detection fires between every tool result and the LLM context. Blocks HIGH risk data for ANALYST clearance; anonymises for others.',tags:['Security','PII','GDPR']},
+      {icon:'🔏',title:'Forensic Snapshot',desc:'Every analysis produces an SHA-256 signed immutable record. Any post-hoc tampering changes the hash, making forgery detectable.',tags:['Audit','SHA-256','Immutable']},
+    ],
+    flowNodes:[
+      {icon:'👤',label:'User Query',color:'bg-slate-800'},
+      {icon:'🤖',label:'ReAct Agent',color:'bg-indigo-900/60'},
+      {icon:'🔌',label:'MCP Tools',color:'bg-purple-900/60'},
+      {icon:'🛡',label:'PII Guard',color:'bg-red-900/60'},
+      {icon:'💡',label:'LLM Context',color:'bg-amber-900/60'},
+      {icon:'🔏',label:'Forensic Snap',color:'bg-emerald-900/60'},
+    ],
+    init(){
+      if(this.token && this.activeTab==='controls') this.loadControls();
+      this.$watch('activeTab', v=>{ if(v==='controls'&&this.token&&!this.controls.length) this.loadControls(); });
+    },
+    logout(){ this.token=''; localStorage.removeItem('token'); this.controls=[]; this.analyzeResult=null; this.piiResult=null; },
+    async api(path,opts={}){
+      const h={'Content-Type':'application/json',...(this.token?{Authorization:'Bearer '+this.token}:{})};
+      const r=await fetch(path,{headers:h,...opts});
+      const j=await r.json();
+      if(!r.ok) throw new Error(j.detail||'Request failed');
+      return j;
+    },
+    async submitAuth(){
+      this.loading.auth=true; this.authError='';
+      try{
+        const ep=this.authMode==='login'?'/api/auth/login':'/api/auth/register';
+        const body=this.authMode==='login'
+          ?{username:this.authForm.user_id,password:this.authForm.password}
+          :{user_id:this.authForm.user_id,password:this.authForm.password,first_name:this.authForm.first_name,last_name:this.authForm.last_name};
+        const res=await this.api(ep,{method:'POST',body:JSON.stringify(body)});
+        this.token=res.token; localStorage.setItem('token',res.token);
+        this.showAuth=false;
+        if(this.activeTab==='controls') this.loadControls();
+      }catch(e){ this.authError=e.message; }
+      finally{ this.loading.auth=false; }
+    },
+    async runAnalysis(){
+      if(!this.token){this.showAuth=true;return;}
+      this.loading.analyze=true; this.analyzeResult=null;
+      try{ this.analyzeResult=await this.api('/api/compliance/analyze',{method:'POST',body:JSON.stringify(this.analyzeForm)}); }
+      catch(e){ alert('Error: '+e.message); }
+      finally{ this.loading.analyze=false; }
+    },
+    async runPiiScan(){
+      if(!this.token){this.showAuth=true;return;}
+      this.loading.pii=true; this.piiResult=null;
+      try{ this.piiResult=await this.api('/api/compliance/pii-scan',{method:'POST',body:JSON.stringify(this.piiForm)}); }
+      catch(e){ alert('Error: '+e.message); }
+      finally{ this.loading.pii=false; }
+    },
+    async loadControls(){
+      if(!this.token) return;
+      this.loading.controls=true;
+      try{
+        const params=new URLSearchParams();
+        if(this.controlFilter.article) params.set('article_id',this.controlFilter.article);
+        if(this.controlFilter.status) params.set('status',this.controlFilter.status);
+        if(this.controlFilter.type) params.set('control_type',this.controlFilter.type);
+        const res=await this.api('/api/compliance/controls?'+params);
+        this.controls=res.controls||[];
+      }catch(e){ console.error(e); }
+      finally{ this.loading.controls=false; }
+    },
+    scoreColor(s){ return s>=80?'text-emerald-400':s>=60?'text-amber-400':'text-red-400'; },
+    scoreHex(s){ return s>=80?'#34d399':s>=60?'#fbbf24':'#ef4444'; },
+    scoreLabel(s){ return s>=80?'Strong Compliance':s>=60?'Partial Compliance':'Compliance Gaps Identified'; },
+  };
+}
+</script>
+</body>
+</html>
