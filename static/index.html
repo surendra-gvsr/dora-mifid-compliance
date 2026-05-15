@@ -1,858 +1,1042 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>DORA and MiFID II · Compliance as Code</title>
-<meta name="description" content="Agentic RAG system mapping ICT controls to DORA and MiFID II articles, with PII Kill Switch and tamper proof forensic snapshots."/>
+<title>The Compliance Dossier · DORA and MiFID II Engine</title>
+<meta name="description" content="An agentic regulatory dossier. Maps ICT controls to DORA and MiFID II articles, redacts PII before it reaches the model, and seals every conclusion with a SHA 256 signature."/>
 
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=Newsreader:ital,opsz,wght@0,6..72,300..700;1,6..72,400&family=JetBrains+Mono:wght@400;500;700&family=Special+Elite&display=swap" rel="stylesheet"/>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 <style>
   :root{
-    --bg:#05060f;
-    --surface:#0b0f1f;
-    --surface-2:#0f1428;
-    --border:rgba(99,102,241,.18);
-    --border-strong:rgba(99,102,241,.32);
-    --text:#e6e9f5;
-    --muted:#7c83a3;
-    --accent:#6366f1;
-    --accent-2:#a78bfa;
-    --accent-3:#22d3ee;
-    --success:#10b981;
-    --warn:#f59e0b;
-    --danger:#ef4444;
+    --paper:#ece3d0;
+    --paper-aged:#e3d7be;
+    --card:#f4ecd8;
+    --ink:#1a140e;
+    --ink-2:#3a2f23;
+    --ink-soft:#6b5a47;
+    --ink-faint:#9c8a73;
+    --rule:rgba(26,20,14,.22);
+    --rule-soft:rgba(26,20,14,.10);
+    --stamp:#a8231f;
+    --stamp-deep:#7a1a17;
+    --audit:#b8761b;
+    --seal:#2d5d2a;
+    --void:#0d0a06;
   }
-  *{font-family:'Inter',ui-sans-serif,system-ui,sans-serif}
-  code,pre,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
-  body{background:var(--bg);color:var(--text);font-feature-settings:"cv11","ss01","ss02"}
+  *{font-family:'Newsreader',Georgia,serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .display{font-family:'Fraunces',serif;font-feature-settings:"ss01","ss03","ss06"}
+  .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-feature-settings:"calt","ss01"}
+  .stamp-font{font-family:'Special Elite','JetBrains Mono',monospace}
+  body{background:var(--paper);color:var(--ink);font-size:16px;line-height:1.55;font-feature-settings:"liga","calt","ss01"}
   [x-cloak]{display:none!important}
 
-  /* Background ambient layers */
-  .ambient{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-  .ambient::before{content:'';position:absolute;inset:0;background:
-    radial-gradient(900px 500px at 15% 0%,rgba(99,102,241,.18),transparent 60%),
-    radial-gradient(800px 500px at 85% 5%,rgba(168,85,247,.14),transparent 60%),
-    radial-gradient(700px 500px at 50% 100%,rgba(34,211,238,.10),transparent 60%)}
-  .grid-bg{position:absolute;inset:0;background-image:
-    linear-gradient(rgba(99,102,241,.06) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(99,102,241,.06) 1px,transparent 1px);
-    background-size:48px 48px;
-    mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%)}
-
-  /* Animated grid squares (Magic UI inspired) */
-  .grid-squares span{position:absolute;width:46px;height:46px;background:rgba(99,102,241,.10);border-radius:4px;animation:pulse-square 4.5s ease-in-out infinite}
-  @keyframes pulse-square{0%,100%{opacity:0}50%{opacity:.55}}
-
-  /* Animated gradient text */
-  .grad-text{
-    background:linear-gradient(120deg,#6366f1 0%,#a78bfa 35%,#22d3ee 70%,#6366f1 100%);
-    background-size:300% 100%;
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    animation:flow 8s linear infinite;
+  /* Paper grain overlay */
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:1;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.1 0 0 0 0 0.07 0 0 0 0 0.04 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity:.55;mix-blend-mode:multiply;
   }
-  @keyframes flow{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+  body::after{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:1;
+    background:
+      radial-gradient(circle at 8% 12%,rgba(0,0,0,.06),transparent 35%),
+      radial-gradient(circle at 92% 88%,rgba(0,0,0,.05),transparent 40%),
+      radial-gradient(circle at 50% 50%,transparent 60%,rgba(0,0,0,.08));
+  }
+
+  /* Selection */
+  ::selection{background:var(--ink);color:var(--paper)}
+
+  /* Eyebrow / overline */
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+  .eyebrow-red{color:var(--stamp);font-weight:700}
+
+  /* Rules */
+  .rule{height:1px;background:var(--ink);opacity:.22}
+  .rule-double{position:relative;height:6px}
+  .rule-double::before,.rule-double::after{content:'';position:absolute;left:0;right:0;height:1px;background:var(--ink);opacity:.55}
+  .rule-double::before{top:0}.rule-double::after{bottom:0}
+
+  /* Trim marks at page corners */
+  .trim{position:fixed;width:24px;height:24px;z-index:2;pointer-events:none}
+  .trim::before,.trim::after{content:'';position:absolute;background:var(--ink);opacity:.45}
+  .trim::before{width:1px;height:100%;left:50%}
+  .trim::after{height:1px;width:100%;top:50%}
+  .trim.tl{top:14px;left:14px}.trim.tr{top:14px;right:14px}
+  .trim.bl{bottom:14px;left:14px}.trim.br{bottom:14px;right:14px}
+
+  /* Classification banner */
+  .classif{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.32em;color:var(--stamp);text-transform:uppercase}
+
+  /* Stamp */
+  .stamp{
+    position:relative;display:inline-block;padding:6px 18px;
+    border:2.5px solid var(--stamp);color:var(--stamp);
+    font-family:'Special Elite',monospace;font-size:14px;letter-spacing:.18em;text-transform:uppercase;
+    transform:rotate(-3deg);
+    box-shadow:inset 0 0 0 1px rgba(168,35,31,.4);
+  }
+  .stamp::before,.stamp::after{
+    content:'';position:absolute;background:var(--paper);
+  }
+  .stamp::before{top:-2px;bottom:-2px;left:35%;width:2px;opacity:.35}
+  .stamp::after{top:-2px;bottom:-2px;right:30%;width:1px;opacity:.25}
+  .stamp-circle{
+    width:96px;height:96px;border-radius:999px;border:2.5px solid var(--stamp);color:var(--stamp);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-family:'Special Elite',monospace;font-size:9px;line-height:1.2;letter-spacing:.16em;text-transform:uppercase;
+    transform:rotate(-8deg);position:relative;
+  }
+  .stamp-circle::before{content:'';position:absolute;inset:5px;border:1px solid var(--stamp);border-radius:999px;opacity:.5}
 
   /* Card */
-  .glass{
-    background:linear-gradient(180deg,rgba(11,15,31,.72),rgba(11,15,31,.55));
-    border:1px solid var(--border);
-    backdrop-filter:blur(14px);
-    -webkit-backdrop-filter:blur(14px);
-    border-radius:18px;
+  .doc-card{
+    background:var(--card);
+    border:1px solid var(--rule);
+    box-shadow:
+      0 1px 0 var(--rule-soft) inset,
+      0 18px 35px -25px rgba(0,0,0,.25),
+      0 6px 18px -10px rgba(0,0,0,.12);
+    position:relative;
   }
-  .glass-soft{background:rgba(11,15,31,.5);border:1px solid var(--border);border-radius:14px}
-
-  /* Border beam wrapper */
-  .beam{position:relative;border-radius:inherit;overflow:hidden}
-  .beam::before{
-    content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1px;
-    background:conic-gradient(from var(--beam-angle,0deg),
-      transparent 0deg,transparent 320deg,#6366f1 340deg,#a78bfa 350deg,#22d3ee 360deg);
-    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-    -webkit-mask-composite:xor;mask-composite:exclude;
-    animation:beam-rot 6s linear infinite;
-    pointer-events:none;
-  }
-  @property --beam-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
-  @keyframes beam-rot{to{--beam-angle:360deg}}
-  @supports not (background:conic-gradient(from 0deg,red,red)){
-    .beam::before{display:none}
+  .doc-card.frayed::before{
+    content:'';position:absolute;left:0;right:0;top:-1px;height:6px;
+    background-image:radial-gradient(circle at 4px 0,var(--paper) 1.5px,transparent 2px);
+    background-size:8px 6px;background-position:0 0;
   }
 
-  /* Shimmer button */
-  .shimmer{position:relative;overflow:hidden;isolation:isolate}
-  .shimmer::after{
-    content:'';position:absolute;inset:0;
-    background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%);
-    transform:translateX(-100%);
-    animation:shimmer 2.6s ease-in-out infinite;
-    pointer-events:none;
+  /* Section number */
+  .secno{font-family:'Fraunces',serif;font-variation-settings:"opsz" 144,"SOFT" 100;font-weight:300;color:var(--ink);line-height:.85}
+
+  /* Marginalia */
+  .marg{font-family:'Special Elite',monospace;color:var(--stamp);font-size:11px;line-height:1.4;letter-spacing:.04em;transform:rotate(-2deg);display:inline-block}
+
+  /* Redaction bar */
+  .redact{background:var(--ink);color:var(--ink);padding:0 4px;user-select:none;border-radius:1px;box-shadow:0 1px 0 rgba(0,0,0,.2)}
+
+  /* Buttons */
+  .btn-ink{
+    background:var(--ink);color:var(--paper);
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;
+    padding:14px 22px;border:none;cursor:pointer;
+    transition:transform .15s ease,background .2s ease;
+    box-shadow:0 4px 0 var(--void),inset 0 1px 0 rgba(255,255,255,.08);
   }
-  @keyframes shimmer{0%{transform:translateX(-120%)}60%,100%{transform:translateX(120%)}}
+  .btn-ink:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 5px 0 var(--void)}
+  .btn-ink:active:not(:disabled){transform:translateY(2px);box-shadow:0 2px 0 var(--void)}
+  .btn-ink:disabled{opacity:.4;cursor:not-allowed}
+  .btn-ghost{
+    background:transparent;color:var(--ink);
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;
+    padding:13px 22px;border:1.5px solid var(--ink);cursor:pointer;
+    transition:all .2s ease;
+  }
+  .btn-ghost:hover{background:var(--ink);color:var(--paper)}
 
-  /* Pill tabs sliding indicator */
-  .tab-pill{position:relative;transition:color .25s ease}
-  .tab-pill.active{color:#fff}
-  .tab-indicator{position:absolute;inset:4px auto 4px 4px;background:linear-gradient(135deg,#6366f1,#7c3aed);border-radius:10px;box-shadow:0 8px 28px -8px rgba(99,102,241,.55);transition:transform .35s cubic-bezier(.4,0,.2,1),width .35s cubic-bezier(.4,0,.2,1)}
+  /* Inputs */
+  .field{
+    background:transparent;border:none;border-bottom:1.5px solid var(--ink);
+    font-family:'Newsreader',serif;font-size:17px;color:var(--ink);
+    padding:8px 0;width:100%;outline:none;
+    transition:border-color .2s;
+  }
+  .field:focus{border-color:var(--stamp)}
+  .field::placeholder{color:var(--ink-faint);font-style:italic}
+  .field-label{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;margin-bottom:4px;display:block}
+  .field-box{
+    background:rgba(0,0,0,.025);border:1px solid var(--rule);
+    font-family:'Newsreader',serif;font-size:16px;color:var(--ink);
+    padding:12px 14px;width:100%;outline:none;
+    transition:border-color .2s;
+  }
+  .field-box:focus{border-color:var(--stamp);background:rgba(168,35,31,.04)}
+  .field-mono{font-family:'JetBrains Mono',monospace;font-size:13px}
 
-  /* Status chips */
-  .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;border:1px solid}
-  .chip-implemented{background:rgba(16,185,129,.10);color:#34d399;border-color:rgba(16,185,129,.30)}
-  .chip-partial{background:rgba(245,158,11,.10);color:#fbbf24;border-color:rgba(245,158,11,.30)}
-  .chip-gap{background:rgba(239,68,68,.10);color:#f87171;border-color:rgba(239,68,68,.30)}
-  .chip-high{background:rgba(239,68,68,.12);color:#f87171;border-color:rgba(239,68,68,.32)}
-  .chip-medium{background:rgba(245,158,11,.12);color:#fbbf24;border-color:rgba(245,158,11,.32)}
-  .chip-low{background:rgba(16,185,129,.12);color:#34d399;border-color:rgba(16,185,129,.32)}
-  .chip-dora{background:rgba(59,130,246,.10);color:#60a5fa;border-color:rgba(59,130,246,.28)}
-  .chip-mifid{background:rgba(168,85,247,.10);color:#c4b5fd;border-color:rgba(168,85,247,.28)}
+  /* Select */
+  select.field, select.field-box{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231a140e' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
 
-  /* Steps line */
-  .timeline{position:relative;padding-left:28px}
-  .timeline::before{content:'';position:absolute;left:11px;top:8px;bottom:8px;width:1.5px;background:linear-gradient(180deg,rgba(99,102,241,.5),rgba(99,102,241,.05))}
-  .dot{position:absolute;left:5px;width:14px;height:14px;border-radius:999px;background:#0b0f1f;border:2.5px solid #6366f1;box-shadow:0 0 0 4px rgba(99,102,241,.10)}
+  /* Tab pill */
+  .seg{display:inline-flex;border:1.5px solid var(--ink);background:var(--paper-aged)}
+  .seg button{
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+    letter-spacing:.18em;text-transform:uppercase;
+    padding:11px 18px;color:var(--ink);background:transparent;border:none;cursor:pointer;
+    border-right:1px solid var(--rule);transition:all .2s;display:flex;align-items:center;gap:8px;
+  }
+  .seg button:last-child{border-right:none}
+  .seg button.active{background:var(--ink);color:var(--paper)}
+  .seg button:not(.active):hover{background:rgba(0,0,0,.06)}
+  .seg button .num{font-size:9px;opacity:.6;font-weight:500}
+  .seg button.active .num{opacity:.7}
 
-  /* Score ring */
-  .ring{transform:rotate(-90deg);transform-origin:50% 50%}
-  .ring-track{stroke:rgba(99,102,241,.15)}
-  .ring-fill{stroke-dasharray:283;transition:stroke-dashoffset 1.6s cubic-bezier(.34,1.2,.4,1),stroke 1s ease}
+  /* Chips */
+  .tag{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:3px 9px;border:1px solid;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .tag-implemented{color:var(--seal);border-color:var(--seal);background:rgba(45,93,42,.08)}
+  .tag-partial{color:var(--audit);border-color:var(--audit);background:rgba(184,118,27,.10)}
+  .tag-gap{color:var(--stamp);border-color:var(--stamp);background:rgba(168,35,31,.08)}
+  .tag-high{color:var(--stamp);border-color:var(--stamp);background:rgba(168,35,31,.08)}
+  .tag-medium{color:var(--audit);border-color:var(--audit);background:rgba(184,118,27,.10)}
+  .tag-low{color:var(--seal);border-color:var(--seal);background:rgba(45,93,42,.08)}
+  .tag-dora{color:#2d4d7c;border-color:#2d4d7c;background:rgba(45,77,124,.07)}
+  .tag-mifid{color:#5d2d7c;border-color:#5d2d7c;background:rgba(93,45,124,.07)}
 
-  /* Pulsating CTA */
-  .pulse-dot::before{content:'';display:inline-block;width:6px;height:6px;border-radius:999px;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.6);animation:pulse 1.8s ease-out infinite;margin-right:6px;vertical-align:middle}
-  @keyframes pulse{70%{box-shadow:0 0 0 9px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+  /* Timeline */
+  .docline{position:relative;padding-left:36px}
+  .docline::before{content:'';position:absolute;left:11px;top:8px;bottom:8px;width:1.5px;background:var(--ink);opacity:.25}
+  .docline-dot{position:absolute;left:5px;width:14px;height:14px;border-radius:999px;background:var(--paper);border:2px solid var(--ink);box-shadow:0 0 0 3px var(--paper)}
 
-  /* Smooth fade-in on Alpine x-show */
-  .fade{animation:fade-in .35s ease both}
-  @keyframes fade-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  /* Score numeral */
+  .numeral{font-family:'Fraunces',serif;font-variation-settings:"opsz" 144;font-weight:300;line-height:.85;letter-spacing:-.03em}
+
+  /* Page reveal */
+  .reveal{opacity:0;transform:translateY(8px);animation:reveal .8s cubic-bezier(.2,.7,.3,1) forwards}
+  @keyframes reveal{to{opacity:1;transform:none}}
+  .reveal-1{animation-delay:.05s}.reveal-2{animation-delay:.15s}.reveal-3{animation-delay:.25s}.reveal-4{animation-delay:.4s}.reveal-5{animation-delay:.55s}.reveal-6{animation-delay:.7s}
+
+  /* Stamp drop */
+  .stamp-drop{animation:stamp-drop .55s cubic-bezier(.4,1.6,.5,.9) both}
+  @keyframes stamp-drop{
+    0%{opacity:0;transform:rotate(-3deg) scale(2.2)}
+    50%{opacity:1;transform:rotate(-3deg) scale(1.05)}
+    100%{transform:rotate(-3deg) scale(1)}
+  }
+  .stamp-circle.stamp-drop{animation-name:stamp-drop-c}
+  @keyframes stamp-drop-c{
+    0%{opacity:0;transform:rotate(-8deg) scale(2.2)}
+    50%{opacity:1;transform:rotate(-8deg) scale(1.05)}
+    100%{transform:rotate(-8deg) scale(1)}
+  }
+
+  /* Fade for x-show */
+  .fade{animation:fade .35s ease both}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
   /* Scrollbar */
-  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar{width:8px;height:8px}
   ::-webkit-scrollbar-track{background:transparent}
-  ::-webkit-scrollbar-thumb{background:rgba(99,102,241,.30);border-radius:6px}
-  ::-webkit-scrollbar-thumb:hover{background:rgba(99,102,241,.5)}
+  ::-webkit-scrollbar-thumb{background:rgba(26,20,14,.22);border:2px solid var(--paper)}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(26,20,14,.35)}
+
+  /* Definition list (form-style metadata) */
+  .meta{display:grid;grid-template-columns:auto 1fr;gap:6px 16px}
+  .meta dt{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;padding-top:3px}
+  .meta dd{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink);font-weight:500}
+
+  /* Underlined link */
+  a.ul{position:relative;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--ink);transition:color .2s}
+  a.ul:hover{color:var(--stamp);border-color:var(--stamp)}
+
+  /* Toast */
+  .toast{position:fixed;bottom:32px;right:32px;background:var(--ink);color:var(--paper);padding:14px 18px;border:2px solid var(--ink);box-shadow:4px 4px 0 var(--void);z-index:60;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.06em}
+
+  /* Modal backdrop */
+  .modal-back{position:fixed;inset:0;background:rgba(13,10,6,.78);z-index:50;backdrop-filter:blur(4px)}
 
   /* Skeleton */
-  .skel{background:linear-gradient(90deg,rgba(99,102,241,.05),rgba(99,102,241,.15),rgba(99,102,241,.05));background-size:200% 100%;animation:skel 1.4s linear infinite;border-radius:8px}
+  .skel{background:linear-gradient(90deg,rgba(26,20,14,.05),rgba(26,20,14,.15),rgba(26,20,14,.05));background-size:200% 100%;animation:skel 1.4s linear infinite}
   @keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-  pre{white-space:pre-wrap;word-break:break-all}
+  /* Cite (footnote-style numbered) */
+  .cite{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:600;color:var(--stamp);vertical-align:super;margin-left:2px}
+
+  pre{white-space:pre-wrap;word-break:break-word;font-family:'JetBrains Mono',monospace}
   .line-clamp-2{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* Helpers */
+  .text-ink{color:var(--ink)}.text-stamp{color:var(--stamp)}.text-audit{color:var(--audit)}.text-seal{color:var(--seal)}.text-soft{color:var(--ink-soft)}.text-faint{color:var(--ink-faint)}
+  .bg-card{background:var(--card)}.bg-aged{background:var(--paper-aged)}
+  .border-ink{border-color:var(--ink)}.border-rule{border-color:var(--rule)}
 </style>
 </head>
 
-<body x-data="app()" x-init="init()" class="min-h-screen">
+<body x-data="app()" x-init="init()">
 
-<div class="ambient">
-  <div class="grid-bg"></div>
-  <div class="grid-squares absolute inset-0">
-    <span style="top:8%;left:12%;animation-delay:.2s"></span>
-    <span style="top:18%;left:34%;animation-delay:1.4s"></span>
-    <span style="top:30%;left:72%;animation-delay:2.6s"></span>
-    <span style="top:48%;left:8%;animation-delay:.8s"></span>
-    <span style="top:55%;left:50%;animation-delay:1.9s"></span>
-    <span style="top:65%;left:82%;animation-delay:.5s"></span>
-    <span style="top:78%;left:24%;animation-delay:3.1s"></span>
-    <span style="top:88%;left:62%;animation-delay:2.2s"></span>
+<!-- Trim marks -->
+<div class="trim tl"></div><div class="trim tr"></div>
+<div class="trim bl"></div><div class="trim br"></div>
+
+<!-- Classification banner -->
+<div class="border-b border-ink relative z-10" style="background:var(--paper-aged)">
+  <div class="max-w-[1240px] mx-auto px-6 py-2 flex items-center justify-between gap-4 text-[10px]">
+    <span class="classif">Public · Demonstration Dossier · Not for production use</span>
+    <span class="mono text-soft hidden sm:block">FILE NO. <span class="text-ink font-bold">DORA/MIFID-II/2026-Q2</span></span>
   </div>
 </div>
 
-<!-- NAV -->
-<nav class="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/60 border-b border-white/5">
-  <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-    <a href="#" class="flex items-center gap-3">
-      <div class="relative w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-500/30">
-        C²
-        <span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-950"></span>
+<!-- Masthead -->
+<header class="max-w-[1240px] mx-auto px-6 pt-10 pb-8 relative z-10">
+  <div class="flex items-start justify-between gap-8 flex-wrap">
+    <div class="flex items-center gap-5">
+      <div class="w-14 h-14 border-2 border-ink flex items-center justify-center bg-card relative">
+        <span class="display text-2xl font-black leading-none">C²</span>
+        <span class="absolute -top-2 -right-2 mono text-[8px] font-bold text-stamp" style="background:var(--paper);padding:1px 3px">№</span>
       </div>
-      <div class="leading-tight">
-        <div class="text-white font-semibold text-sm tracking-tight">Compliance as Code</div>
-        <div class="text-[11px] text-slate-500 font-medium">DORA and MiFID II Engine</div>
+      <div>
+        <p class="eyebrow eyebrow-red">The Compliance Dossier</p>
+        <h2 class="display text-xl font-medium tracking-tight leading-tight">An audit of ICT controls against EU regulation</h2>
       </div>
-    </a>
-
-    <div class="flex items-center gap-3">
-      <a href="/docs" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition">
-        API Docs
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
-      </a>
-      <a href="https://github.com/surendra-gvsr/dora-mifid-compliance" target="_blank" class="text-slate-400 hover:text-white transition" title="Source">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.7.5.7 5.5.7 11.8c0 5 3.2 9.3 7.7 10.8.6.1.8-.2.8-.6v-2c-3.1.7-3.8-1.5-3.8-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.2 1.7 1.2 1 1.7 2.7 1.2 3.4.9.1-.7.4-1.2.7-1.5-2.5-.3-5.1-1.3-5.1-5.6 0-1.2.4-2.2 1.2-3-.1-.3-.5-1.5.1-3 0 0 1-.3 3.1 1.2.9-.3 1.9-.4 2.8-.4s1.9.1 2.8.4c2.1-1.5 3.1-1.2 3.1-1.2.6 1.5.2 2.7.1 3 .7.8 1.2 1.8 1.2 3 0 4.3-2.6 5.3-5.1 5.6.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6 4.5-1.5 7.7-5.8 7.7-10.8C23.3 5.5 18.3.5 12 .5z"/></svg>
-      </a>
+    </div>
+    <nav class="flex items-center gap-5 mt-2 sm:mt-0">
+      <a href="/docs" target="_blank" class="ul mono text-[11px] uppercase tracking-widest">API Schema</a>
+      <a href="https://github.com/surendra-gvsr/dora-mifid-compliance" target="_blank" class="ul mono text-[11px] uppercase tracking-widest">Source</a>
       <template x-if="!token">
-        <button @click="showAuth=true" class="bg-white text-slate-950 hover:bg-slate-100 text-xs font-semibold px-4 py-2 rounded-lg transition">Sign in</button>
+        <button @click="showAuth=true" class="btn-ink">Sign in</button>
       </template>
       <template x-if="token">
-        <button @click="logout()" class="text-xs text-slate-400 hover:text-white transition">Sign out</button>
+        <button @click="logout()" class="btn-ghost">Sign out</button>
       </template>
-    </div>
+    </nav>
   </div>
-</nav>
+</header>
 
-<!-- HERO -->
-<section class="max-w-7xl mx-auto px-6 pt-20 pb-14 text-center relative">
-  <div class="inline-flex items-center gap-2 bg-slate-900/60 border border-indigo-500/30 rounded-full px-4 py-1.5 text-xs text-slate-300 mb-7">
-    <span class="pulse-dot"></span>
-    Agentic RAG, MCP Tools, Semantic PII Kill Switch, Forensic Snapshots
-  </div>
+<div class="max-w-[1240px] mx-auto px-6 reveal"><div class="rule-double"></div></div>
 
-  <h1 class="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white leading-[1.05] mb-6">
-    Regulatory compliance,<br>
-    <span class="grad-text">automated by AI agents</span>
-  </h1>
+<!-- HERO / Cover page -->
+<section class="max-w-[1240px] mx-auto px-6 pt-12 pb-14 relative z-10">
+  <div class="grid grid-cols-12 gap-8">
 
-  <p class="text-slate-400 text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
-    An agentic system that maps your ICT security controls to <span class="text-slate-200 font-medium">DORA</span> and <span class="text-slate-200 font-medium">MiFID II</span> articles in real time, with gap analysis, compliance scoring, and tamper proof forensic audit trails.
-  </p>
-
-  <div class="flex flex-wrap items-center justify-center gap-3 mb-12">
-    <button @click="activeTab='analyze'; scrollToMain()"
-      class="shimmer relative bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold px-6 py-3 rounded-xl transition-all shadow-lg shadow-indigo-500/30">
-      Run a compliance analysis
-    </button>
-    <button @click="activeTab='pii'; scrollToMain()"
-      class="bg-slate-900/60 hover:bg-slate-900 border border-white/10 text-white font-medium px-6 py-3 rounded-xl transition-all">
-      Try the PII Kill Switch
-    </button>
-  </div>
-
-  <!-- Feature bar -->
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto">
-    <template x-for="f in heroFeatures" :key="f.title">
-      <div class="glass p-4 text-left hover:border-indigo-500/40 transition">
-        <div class="text-xl mb-1.5" x-text="f.icon"></div>
-        <div class="text-white text-sm font-semibold leading-tight" x-text="f.title"></div>
-        <div class="text-slate-500 text-xs mt-1" x-text="f.desc"></div>
+    <!-- Title block (asymmetric, takes 8 cols) -->
+    <div class="col-span-12 lg:col-span-8">
+      <div class="flex items-baseline gap-6 mb-6 reveal reveal-1">
+        <span class="secno text-7xl lg:text-8xl">I.</span>
+        <div>
+          <p class="eyebrow mb-2">Volume 01 · Cover Page</p>
+          <p class="mono text-xs text-soft uppercase tracking-widest">Issued: Q2 · 2026</p>
+        </div>
       </div>
+
+      <h1 class="display text-[58px] lg:text-[88px] font-light leading-[.92] tracking-[-.025em] mb-6 reveal reveal-2">
+        Regulatory<br>
+        <em class="italic font-extralight" style="font-variation-settings:'opsz' 144,'SOFT' 80">compliance,</em><br>
+        rendered as a<br>
+        <span class="text-stamp font-medium">living document.</span>
+      </h1>
+
+      <p class="text-lg lg:text-xl leading-relaxed max-w-[60ch] text-ink-2 reveal reveal-3" style="color:var(--ink-2)">
+        An agentic engine that retrieves the regulation, queries your internal control inventory, and assembles a sealed audit receipt. Every claim is footnoted to source. Every observation passes the Kill Switch. Every conclusion is signed.<span class="cite">[1]</span>
+      </p>
+
+      <div class="flex flex-wrap gap-4 mt-10 reveal reveal-4">
+        <button @click="activeTab='analyze'; scrollMain()" class="btn-ink">Open the case file →</button>
+        <button @click="activeTab='pii'; scrollMain()" class="btn-ghost">Try the redactor</button>
+      </div>
+    </div>
+
+    <!-- Sidebar: dossier metadata (4 cols) -->
+    <aside class="col-span-12 lg:col-span-4 reveal reveal-3">
+      <div class="doc-card p-7 relative">
+        <div class="absolute -top-4 -right-3 stamp-drop" x-data x-init="$el.classList.add('stamp-drop')">
+          <div class="stamp">Confidential</div>
+        </div>
+        <p class="eyebrow mb-5">Dossier Metadata</p>
+        <dl class="meta mb-6">
+          <dt>Subject</dt><dd>EU Financial ICT</dd>
+          <dt>Regulations</dt><dd>DORA · MiFID II</dd>
+          <dt>Articles</dt><dd>7 mapped</dd>
+          <dt>Controls</dt><dd>10 indexed</dd>
+          <dt>Method</dt><dd>Agentic RAG</dd>
+          <dt>Seal</dt><dd>SHA-256</dd>
+        </dl>
+        <div class="rule mb-5"></div>
+        <p class="eyebrow mb-3">Provenance</p>
+        <ul class="space-y-2 text-[13px] leading-relaxed" style="color:var(--ink-2)">
+          <li><span class="mono text-[10px] text-soft mr-2">§5</span>ICT Risk Management Framework</li>
+          <li><span class="mono text-[10px] text-soft mr-2">§7</span>ICT Third Party Risk</li>
+          <li><span class="mono text-[10px] text-soft mr-2">§9</span>Protection and Prevention</li>
+          <li><span class="mono text-[10px] text-soft mr-2">§17</span>Incident Management</li>
+          <li><span class="mono text-[10px] text-soft mr-2">§16</span>Organisational Requirements (MiFID II)</li>
+        </ul>
+      </div>
+
+      <p class="marg mt-4 ml-2">→ See chapter II for the procedure.</p>
+    </aside>
+  </div>
+
+  <!-- Below-fold pillars (asymmetric grid, looks like a contents page) -->
+  <div class="mt-20 grid grid-cols-12 gap-6 reveal reveal-5">
+    <div class="col-span-12 mb-2 flex items-baseline justify-between">
+      <div class="flex items-baseline gap-5">
+        <span class="secno text-4xl">II.</span>
+        <h3 class="display text-2xl font-light tracking-tight">Procedure</h3>
+      </div>
+      <span class="eyebrow">Four artefacts · One pipeline</span>
+    </div>
+    <div class="col-span-12"><div class="rule mb-6"></div></div>
+
+    <template x-for="(p,i) in pillars" :key="p.title">
+      <article class="col-span-12 sm:col-span-6 lg:col-span-3 doc-card p-6 hover:bg-aged transition" :style="`animation-delay:${.6+i*.08}s`">
+        <div class="flex items-baseline justify-between mb-3">
+          <span class="display text-4xl text-stamp font-light" x-text="String(i+1).padStart(2,'0')"></span>
+          <span class="eyebrow" x-text="p.tag"></span>
+        </div>
+        <h4 class="display text-xl font-medium mb-2 leading-tight" x-text="p.title"></h4>
+        <p class="text-sm leading-relaxed" style="color:var(--ink-2)" x-text="p.desc"></p>
+      </article>
     </template>
   </div>
 </section>
 
-<!-- TABS -->
-<div id="mainContent" class="max-w-7xl mx-auto px-6 mb-10">
-  <div class="glass-soft p-1.5 flex gap-1 w-fit mx-auto relative" x-ref="tablist">
-    <div class="tab-indicator" :style="`width:${tabIndicator.w}px;transform:translateX(${tabIndicator.x}px)`"></div>
-    <template x-for="(tab,i) in tabs" :key="tab.id">
-      <button @click="setTab(tab.id,$event)" :ref="el => tabRefs[tab.id]=el"
-        :class="activeTab===tab.id ? 'active' : 'text-slate-400 hover:text-white'"
-        class="tab-pill relative z-10 px-5 py-2 rounded-[10px] text-sm font-medium flex items-center gap-2 whitespace-nowrap">
-        <span x-text="tab.icon"></span><span x-text="tab.label"></span>
-      </button>
-    </template>
-  </div>
-</div>
+<div class="max-w-[1240px] mx-auto px-6 relative z-10"><div class="rule-double"></div></div>
 
-<!-- MAIN -->
-<main class="max-w-7xl mx-auto px-6 pb-24">
-
-  <!-- ANALYZER -->
-  <section x-show="activeTab==='analyze'" x-cloak class="fade grid lg:grid-cols-5 gap-6">
-    <!-- LEFT: form + score -->
-    <div class="lg:col-span-2 space-y-5">
-      <div class="glass beam p-7 relative">
-        <div class="flex items-start justify-between mb-1">
-          <h2 class="text-white font-semibold text-lg">Compliance Analyzer</h2>
-          <span class="chip chip-low">Live agent</span>
-        </div>
-        <p class="text-slate-500 text-sm mb-6 leading-relaxed">Describe your question. The agent retrieves the regulation, queries your controls, and produces a signed audit receipt.</p>
-
-        <div class="space-y-4">
-          <div>
-            <label class="block text-xs text-slate-400 font-medium mb-1.5">Query</label>
-            <textarea x-model="analyzeForm.query" rows="3"
-              class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/40 resize-none transition"></textarea>
-          </div>
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs text-slate-400 font-medium mb-1.5">Regulation</label>
-              <select x-model="analyzeForm.regulation" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
-                <option value="DORA">DORA</option>
-                <option value="MIFID_II">MiFID II</option>
-                <option value="BOTH">Both</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs text-slate-400 font-medium mb-1.5">Clearance</label>
-              <select x-model="analyzeForm.clearance_level" class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition">
-                <option value="ANALYST">Analyst</option>
-                <option value="COMPLIANCE_OFFICER">Compliance Officer</option>
-                <option value="DPO">Data Protection Officer</option>
-              </select>
-            </div>
-          </div>
-          <button @click="runAnalysis()" :disabled="loading.analyze || !token"
-            class="shimmer w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-500/30">
-            <svg x-show="loading.analyze" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>
-            </svg>
-            <span x-text="loading.analyze ? 'Reasoning…' : 'Run analysis'"></span>
-            <svg x-show="!loading.analyze" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
-          </button>
-          <p x-show="!token" class="text-xs text-amber-400 text-center font-medium">Sign in to run the agent</p>
-        </div>
-      </div>
-
-      <!-- Score card -->
-      <div x-show="analyzeResult" x-cloak class="glass p-6 fade">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-xs text-slate-400 uppercase tracking-widest font-semibold">Compliance Score</span>
-          <span class="chip" :class="scoreChipClass(analyzeResult?.analysis?.compliance_score)" x-text="scoreLabel(analyzeResult?.analysis?.compliance_score)"></span>
-        </div>
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="flex items-baseline gap-1">
-              <span class="text-6xl font-bold tabular-nums" :class="scoreColor(analyzeResult?.analysis?.compliance_score)" x-text="displayScore"></span>
-              <span class="text-2xl font-semibold text-slate-500">%</span>
-            </div>
-            <div class="text-xs text-slate-500 mt-2 mono" x-text="analyzeResult?.analysis?.matched_controls?.length+' controls matched'"></div>
-          </div>
-          <svg width="96" height="96" viewBox="0 0 100 100">
-            <circle class="ring-track" cx="50" cy="50" r="45" fill="none" stroke-width="7"/>
-            <circle class="ring ring-fill" cx="50" cy="50" r="45" fill="none" stroke-width="7" stroke-linecap="round"
-              :stroke="scoreHex(analyzeResult?.analysis?.compliance_score)"
-              :style="`stroke-dashoffset:${283-(283*(displayScore)/100)}`"/>
-          </svg>
-        </div>
-        <div class="mt-5 pt-4 border-t border-white/5 space-y-1.5">
-          <div class="flex items-center gap-2 text-xs">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.5"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
-            <span class="text-slate-400">Signed snapshot:</span>
-            <span class="mono text-indigo-300 truncate text-[11px]" x-text="analyzeResult?.snapshot?.snapshot_id?.substring(0,20)+'…'"></span>
-          </div>
-          <div class="flex items-center gap-2 text-xs" :class="analyzeResult?.snapshot?.integrity_verified ? 'text-emerald-400' : 'text-red-400'">
-            <span x-text="analyzeResult?.snapshot?.integrity_verified ? '✓ SHA-256 integrity verified' : '✗ Integrity check failed'"></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Empty / hint -->
-      <div x-show="!analyzeResult && !loading.analyze" class="glass-soft p-5 text-xs text-slate-500 leading-relaxed">
-        <div class="font-medium text-slate-400 mb-1">How it works</div>
-        The agent retrieves the regulation, then queries your ICT controls. Every result is filtered through the PII Kill Switch before the LLM sees it. The final answer is signed with SHA-256 and stored as an immutable snapshot.
+<!-- CHAPTER III: The case file -->
+<section id="case" class="max-w-[1240px] mx-auto px-6 pt-14 pb-10 relative z-10">
+  <div class="flex items-baseline justify-between flex-wrap gap-4 mb-8">
+    <div class="flex items-baseline gap-5">
+      <span class="secno text-5xl">III.</span>
+      <div>
+        <p class="eyebrow mb-1">The Case File</p>
+        <h3 class="display text-3xl font-light tracking-tight">Examine, redact, sign.</h3>
       </div>
     </div>
-
-    <!-- RIGHT: results -->
-    <div class="lg:col-span-3 space-y-5">
-
-      <!-- LOADING -->
-      <div x-show="loading.analyze" x-cloak class="space-y-3">
-        <div class="glass p-6 space-y-3">
-          <div class="skel h-4 w-1/3"></div>
-          <div class="skel h-3 w-full"></div>
-          <div class="skel h-3 w-5/6"></div>
-          <div class="skel h-3 w-2/3"></div>
-        </div>
-        <div class="glass p-6 space-y-3">
-          <div class="skel h-3 w-1/4"></div>
-          <div class="skel h-3 w-full"></div>
-          <div class="skel h-3 w-4/5"></div>
-        </div>
-      </div>
-
-      <!-- REASONING -->
-      <div x-show="analyzeResult" x-cloak class="glass p-6 fade">
-        <div class="flex items-center justify-between mb-5">
-          <h3 class="text-white font-semibold flex items-center gap-2">
-            <span class="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-400">⚡</span>
-            Agent Reasoning
-          </h3>
-          <span class="text-xs text-slate-500 mono" x-text="analyzeResult?.agent_steps?.length+' steps'"></span>
-        </div>
-        <div class="timeline space-y-4">
-          <template x-for="(step, i) in analyzeResult?.agent_steps || []" :key="i">
-            <div class="relative">
-              <div class="dot" :style="`top:${i===0?2:6}px`"></div>
-              <div class="glass-soft p-3.5">
-                <div class="flex items-center gap-2 mb-2 flex-wrap">
-                  <span class="mono text-[10px] uppercase tracking-wider text-slate-500" x-text="'Step '+step.step_number"></span>
-                  <span class="chip chip-low mono" x-text="step.action"></span>
-                  <span x-show="step.observation?.startsWith('[BLOCKED')" class="chip chip-high">PII Blocked</span>
-                </div>
-                <p class="text-sm text-slate-300 leading-relaxed mb-2" x-text="step.thought"></p>
-                <p class="mono text-[11px] text-slate-500 line-clamp-2" x-text="step.observation"></p>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <!-- GAPS -->
-      <div x-show="analyzeResult?.analysis?.gap_analysis?.length" x-cloak class="glass p-6 fade">
-        <h3 class="text-white font-semibold mb-4 flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg bg-amber-500/15 flex items-center justify-center text-amber-400">⚠</span>
-          Gap Analysis
-        </h3>
-        <div class="space-y-2.5">
-          <template x-for="(gap, i) in analyzeResult?.analysis?.gap_analysis || []" :key="i">
-            <div class="border border-amber-500/20 bg-amber-500/[.03] rounded-xl p-4">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="chip chip-partial mono" x-text="gap.article"></span>
-                <span class="text-xs text-slate-500" x-text="gap.requirement"></span>
-              </div>
-              <p class="text-sm text-amber-200/85 leading-relaxed" x-text="gap.gap"></p>
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <!-- MATCHED -->
-      <div x-show="analyzeResult?.analysis?.matched_controls?.length" x-cloak class="glass p-6 fade">
-        <h3 class="text-white font-semibold mb-4 flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-400">✓</span>
-          Matched Controls
-        </h3>
-        <div class="space-y-2">
-          <template x-for="(ctrl, i) in analyzeResult?.analysis?.matched_controls || []" :key="i">
-            <div class="glass-soft p-3.5 flex items-center justify-between hover:border-indigo-500/30 transition">
-              <div class="flex items-center gap-3 min-w-0">
-                <span class="mono text-xs text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded-md whitespace-nowrap" x-text="ctrl.control_id"></span>
-                <span class="text-sm text-slate-300 truncate" x-text="ctrl.control_name"></span>
-              </div>
-              <span class="chip mono" :class="`chip-${ctrl.status}`" x-text="ctrl.status"></span>
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <!-- SUMMARY -->
-      <div x-show="analyzeResult?.analysis?.summary" x-cloak class="glass p-6 fade">
-        <h3 class="text-white font-semibold mb-3 flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-400">📋</span>
-          Executive Summary
-        </h3>
-        <p class="text-slate-300 text-sm leading-relaxed" x-text="analyzeResult?.analysis?.summary"></p>
-      </div>
-
-      <!-- EMPTY STATE -->
-      <div x-show="!analyzeResult && !loading.analyze" class="glass p-16 text-center">
-        <div class="text-6xl mb-4 opacity-30">🔍</div>
-        <h3 class="text-white font-medium mb-2">No analysis yet</h3>
-        <p class="text-slate-500 text-sm max-w-md mx-auto">Run an analysis to see the agent reasoning, gap report, and a signed forensic snapshot appear here.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- PII -->
-  <section x-show="activeTab==='pii'" x-cloak class="fade grid lg:grid-cols-2 gap-6">
-
-    <div class="glass beam p-7">
-      <div class="flex items-start gap-3 mb-2">
-        <div class="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 text-lg">🛡</div>
-        <div>
-          <h2 class="text-white font-semibold text-lg">Semantic PII Kill Switch</h2>
-          <p class="text-slate-500 text-xs mt-0.5">In flight detection and clearance enforcement</p>
-        </div>
-      </div>
-      <p class="text-slate-400 text-sm mb-6 leading-relaxed">Paste any text. The system scans for PII and either blocks or anonymises it based on your clearance level, before the LLM ever sees it.</p>
-
-      <div class="space-y-4">
-        <div>
-          <label class="block text-xs text-slate-400 font-medium mb-1.5">Text to scan</label>
-          <textarea x-model="piiForm.text" rows="4"
-            class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 mono placeholder-slate-600 focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500/40 resize-none transition"></textarea>
-        </div>
-        <div>
-          <label class="block text-xs text-slate-400 font-medium mb-1.5">Clearance level</label>
-          <div class="grid grid-cols-3 gap-2">
-            <template x-for="lvl in clearanceLevels" :key="lvl.id">
-              <button @click="piiForm.clearance_level=lvl.id"
-                :class="piiForm.clearance_level===lvl.id ? 'bg-indigo-500/20 border-indigo-500/60 text-white' : 'bg-slate-900/40 border-white/10 text-slate-400 hover:border-white/20'"
-                class="border rounded-xl p-3 text-xs font-medium transition text-left">
-                <div x-text="lvl.label" class="font-semibold"></div>
-                <div class="text-[10px] text-slate-500 mt-0.5" x-text="lvl.hint"></div>
-              </button>
-            </template>
-          </div>
-        </div>
-        <button @click="runPiiScan()" :disabled="loading.pii || !token"
-          class="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-lg shadow-red-500/20">
-          <svg x-show="loading.pii" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>
-          </svg>
-          <span x-text="loading.pii ? 'Scanning…' : 'Scan for PII'"></span>
+    <div class="seg" x-ref="tablist">
+      <template x-for="(tab,i) in tabs" :key="tab.id">
+        <button @click="activeTab=tab.id" :class="activeTab===tab.id?'active':''">
+          <span class="num" x-text="String(i+1).padStart(2,'0')"></span>
+          <span x-text="tab.label"></span>
         </button>
-        <p x-show="!token" class="text-xs text-amber-400 text-center font-medium">Sign in to test the scanner</p>
-      </div>
-    </div>
-
-    <div class="space-y-5">
-      <!-- RESULT -->
-      <div x-show="piiResult" x-cloak class="glass p-6 fade">
-        <!-- Verdict -->
-        <div class="rounded-2xl border p-5 mb-5 flex items-center gap-4"
-          :class="piiResult?.access_blocked ? 'bg-red-500/[.06] border-red-500/30' : piiResult?.pii_found ? 'bg-amber-500/[.06] border-amber-500/30' : 'bg-emerald-500/[.06] border-emerald-500/30'">
-          <div class="text-3xl" x-text="piiResult?.access_blocked ? '🚫' : piiResult?.pii_found ? '⚠' : '✅'"></div>
-          <div class="flex-1">
-            <p class="font-bold text-white text-sm tracking-wide" x-text="piiResult?.access_blocked ? 'ACCESS BLOCKED' : piiResult?.pii_found ? 'PII REDACTED' : 'TEXT IS CLEAN'"></p>
-            <p class="text-xs text-slate-400 mt-0.5" x-text="piiResult?.kill_switch_message || (piiResult?.pii_found ? `${piiResult?.entity_count} entit${piiResult?.entity_count===1?'y':'ies'} found and anonymised` : 'No PII detected')"></p>
-          </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="grid grid-cols-3 gap-3 mb-5">
-          <div class="glass-soft p-3 text-center">
-            <div class="text-2xl font-bold text-white tabular-nums" x-text="piiResult?.entity_count||0"></div>
-            <div class="text-[10px] text-slate-500 mt-0.5 uppercase tracking-wider">Entities</div>
-          </div>
-          <div class="glass-soft p-3 text-center">
-            <span class="chip mono inline-block" :class="`chip-${(piiResult?.risk_level||'low').toLowerCase()}`" x-text="piiResult?.risk_level||'NONE'"></span>
-            <div class="text-[10px] text-slate-500 mt-1.5 uppercase tracking-wider">Risk</div>
-          </div>
-          <div class="glass-soft p-3 text-center">
-            <div class="text-xs font-semibold text-white truncate mono" x-text="(piiResult?.entity_types||[]).join(', ')||'none'"></div>
-            <div class="text-[10px] text-slate-500 mt-1.5 uppercase tracking-wider">Types</div>
-          </div>
-        </div>
-
-        <!-- Output -->
-        <div x-show="piiResult?.anonymized_text" class="glass-soft p-4">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-[10px] text-slate-500 font-semibold tracking-widest uppercase">Anonymised Output</span>
-            <button @click="copyText(piiResult?.anonymized_text)" class="text-[10px] text-indigo-400 hover:text-indigo-300 transition" x-text="copyLabel">Copy</button>
-          </div>
-          <pre class="mono text-xs text-emerald-300 leading-relaxed" x-text="piiResult?.anonymized_text"></pre>
-        </div>
-      </div>
-
-      <!-- HOW IT WORKS -->
-      <div class="glass p-6">
-        <h3 class="text-white font-semibold mb-5 flex items-center gap-2">
-          <span class="w-7 h-7 rounded-lg bg-indigo-500/15 flex items-center justify-center text-indigo-400">⚙</span>
-          Detection Pipeline
-        </h3>
-        <div class="space-y-4">
-          <template x-for="(s,i) in piiSteps" :key="i">
-            <div class="flex gap-4">
-              <span class="mono text-xs text-indigo-400 w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center font-semibold flex-shrink-0" x-text="String(i+1).padStart(2,'0')"></span>
-              <div>
-                <p class="text-slate-200 font-medium text-sm" x-text="s.title"></p>
-                <p class="text-slate-500 text-xs mt-0.5 leading-relaxed" x-text="s.desc"></p>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONTROLS -->
-  <section x-show="activeTab==='controls'" x-cloak class="fade">
-    <div class="flex flex-col sm:flex-row gap-3 mb-7">
-      <input x-model.debounce.300ms="controlFilter.article" placeholder="Article filter (Art.9)"
-        class="bg-slate-950/70 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition w-full sm:w-52"/>
-      <select x-model="controlFilter.status" class="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition w-full sm:w-48">
-        <option value="">All statuses</option>
-        <option value="implemented">Implemented</option>
-        <option value="partial">Partial</option>
-        <option value="gap">Gap</option>
-      </select>
-      <select x-model="controlFilter.type" class="bg-slate-950/70 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition w-full sm:w-48">
-        <option value="">All types</option>
-        <option value="preventive">Preventive</option>
-        <option value="detective">Detective</option>
-        <option value="corrective">Corrective</option>
-      </select>
-      <button @click="loadControls()" :disabled="!token"
-        class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition">
-        Apply
-      </button>
-    </div>
-
-    <div x-show="loading.controls" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <template x-for="i in 6" :key="i">
-        <div class="glass p-5 space-y-3">
-          <div class="skel h-3 w-1/3"></div>
-          <div class="skel h-4 w-3/4"></div>
-          <div class="skel h-3 w-full"></div>
-          <div class="skel h-3 w-5/6"></div>
-        </div>
       </template>
     </div>
+  </div>
+</section>
 
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <template x-for="ctrl in controls" :key="ctrl.id">
-        <div class="glass p-5 hover:border-indigo-500/40 transition-all hover:-translate-y-0.5 cursor-default group">
-          <div class="flex items-start justify-between mb-3">
-            <div class="flex items-center gap-2">
-              <span class="mono text-xs font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2 py-0.5 rounded-md" x-text="ctrl.id"></span>
-              <span class="chip" :class="`chip-${ctrl.status}`" x-text="ctrl.status"></span>
-            </div>
-            <span class="mono text-[10px] text-slate-600" x-text="'v'+ctrl.version"></span>
+<main class="max-w-[1240px] mx-auto px-6 pb-24 relative z-10">
+
+<!-- ANALYZER -->
+<section x-show="activeTab==='analyze'" x-cloak class="fade grid grid-cols-12 gap-7">
+  <!-- LEFT: Form -->
+  <div class="col-span-12 lg:col-span-5">
+    <div class="doc-card p-8 relative">
+      <p class="eyebrow mb-2">Form 01 · Inquiry</p>
+      <h3 class="display text-3xl font-light tracking-tight mb-1">File a request</h3>
+      <p class="text-sm mb-7" style="color:var(--ink-soft)">Pose a compliance question. The agent will return reasoning steps, gap analysis, and a signed receipt.</p>
+
+      <div class="space-y-5">
+        <div>
+          <label class="field-label">Inquiry</label>
+          <textarea x-model="analyzeForm.query" rows="3" class="field-box" placeholder="State the question for the agent…"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-5">
+          <div>
+            <label class="field-label">Regulation</label>
+            <select x-model="analyzeForm.regulation" class="field-box field-mono">
+              <option value="DORA">DORA</option>
+              <option value="MIFID_II">MiFID II</option>
+              <option value="BOTH">Both</option>
+            </select>
           </div>
-          <h3 class="text-white font-semibold text-sm mb-2 leading-snug group-hover:text-indigo-300 transition" x-text="ctrl.name"></h3>
-          <p class="text-slate-500 text-xs leading-relaxed line-clamp-2 mb-4" x-text="ctrl.description"></p>
-          <div class="flex flex-wrap gap-1.5 mb-3">
-            <template x-for="a in (ctrl.dora_articles||[])" :key="a">
-              <span class="chip chip-dora mono" x-text="a"></span>
-            </template>
-            <template x-for="a in (ctrl.mifid_articles||[])" :key="a">
-              <span class="chip chip-mifid mono" x-text="'MiFID '+a"></span>
-            </template>
-            <span class="chip mono text-slate-400 bg-slate-800/60 border-white/5" x-text="ctrl.control_type"></span>
-          </div>
-          <div class="pt-3 border-t border-white/5 flex items-center gap-2 text-xs text-slate-500">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="7" r="4"/><path d="M5 21v-2a7 7 0 0114 0v2"/></svg>
-            <span x-text="ctrl.owner"></span>
-            <span class="text-slate-700 ml-auto" x-text="ctrl.last_reviewed"></span>
+          <div>
+            <label class="field-label">Clearance</label>
+            <select x-model="analyzeForm.clearance_level" class="field-box field-mono">
+              <option value="ANALYST">Analyst</option>
+              <option value="COMPLIANCE_OFFICER">Officer</option>
+              <option value="DPO">DPO</option>
+            </select>
           </div>
         </div>
-      </template>
-    </div>
-
-    <div x-show="!token && !loading.controls" class="glass p-16 text-center">
-      <div class="text-5xl mb-4 opacity-40">🔒</div>
-      <h3 class="text-white font-medium mb-2">Authentication required</h3>
-      <p class="text-slate-500 text-sm mb-5">Sign in to browse the ICT controls database.</p>
-      <button @click="showAuth=true" class="bg-white text-slate-950 hover:bg-slate-100 text-sm font-semibold px-5 py-2 rounded-lg transition">Sign in</button>
-    </div>
-
-    <div x-show="token && controls.length===0 && !loading.controls" class="glass p-12 text-center">
-      <p class="text-slate-500 text-sm">No controls match the filters.</p>
-    </div>
-  </section>
-
-  <!-- ARCHITECTURE -->
-  <section x-show="activeTab==='arch'" x-cloak class="fade space-y-6">
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <template x-for="c in archCards" :key="c.title">
-        <div class="glass p-5 hover:border-indigo-500/40 hover:-translate-y-0.5 transition-all">
-          <div class="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-4" :class="c.bg" x-text="c.icon"></div>
-          <h3 class="text-white font-semibold text-sm mb-1.5" x-text="c.title"></h3>
-          <p class="text-slate-500 text-xs leading-relaxed mb-3" x-text="c.desc"></p>
-          <div class="flex flex-wrap gap-1">
-            <template x-for="t in c.tags" :key="t">
-              <span class="text-[10px] font-medium mono text-slate-400 bg-white/5 border border-white/5 px-2 py-0.5 rounded" x-text="t"></span>
-            </template>
-          </div>
+        <div class="pt-2">
+          <button @click="runAnalysis()" :disabled="loading.analyze || !token" class="btn-ink w-full flex items-center justify-center gap-3">
+            <svg x-show="loading.analyze" class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".3"/>
+              <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" fill="none"/>
+            </svg>
+            <span x-text="loading.analyze ? 'Agent at work…' : 'Submit for analysis'"></span>
+          </button>
+          <p x-show="!token" class="mono text-[11px] text-stamp text-center mt-3 uppercase tracking-widest">Sign in required</p>
         </div>
-      </template>
+      </div>
+
+      <p class="marg mt-8 ml-2">Form must be signed.<br>See seal at conclusion.</p>
     </div>
 
-    <!-- Request flow -->
-    <div class="glass p-7">
-      <h3 class="text-white font-semibold mb-2">Request Flow</h3>
-      <p class="text-slate-500 text-sm mb-6">Every analysis traverses six guarded stages before producing a signed snapshot.</p>
-      <div class="flex flex-wrap items-center justify-center gap-2 text-sm">
-        <template x-for="(node, i) in flowNodes" :key="i">
-          <div class="flex items-center gap-2">
-            <div :class="node.color" class="border rounded-2xl px-4 py-3 text-center min-w-[120px] transition hover:-translate-y-0.5">
-              <div class="text-lg mb-1.5" x-text="node.icon"></div>
-              <div class="text-xs font-semibold text-white leading-tight" x-text="node.label"></div>
+    <!-- Score panel: like a verdict block -->
+    <div x-show="analyzeResult" x-cloak class="doc-card p-8 mt-7 fade relative">
+      <div class="absolute -top-5 right-6 stamp-drop">
+        <div class="stamp-circle">SEALED<br>SHA-256<br>VERIFIED</div>
+      </div>
+      <p class="eyebrow mb-2">Findings · Verdict</p>
+      <h3 class="display text-2xl font-light mb-6 tracking-tight">Compliance score</h3>
+
+      <div class="flex items-end gap-4 mb-6">
+        <span class="numeral text-[120px]" :class="scoreColor(analyzeResult?.analysis?.compliance_score)" x-text="displayScore"></span>
+        <div class="pb-6">
+          <span class="display text-3xl font-light" style="color:var(--ink-soft)">/100</span>
+          <p class="eyebrow mt-2" x-text="scoreLabel(analyzeResult?.analysis?.compliance_score)"></p>
+        </div>
+      </div>
+
+      <div class="rule mb-5"></div>
+
+      <dl class="meta">
+        <dt>Matched</dt><dd x-text="(analyzeResult?.analysis?.matched_controls?.length||0)+' controls'"></dd>
+        <dt>Gaps</dt><dd x-text="(analyzeResult?.analysis?.gap_analysis?.length||0)+' identified'"></dd>
+        <dt>Seal ID</dt><dd class="truncate" x-text="analyzeResult?.snapshot?.snapshot_id?.substring(0,18)+'…'"></dd>
+        <dt>Integrity</dt><dd :class="analyzeResult?.snapshot?.integrity_verified?'text-seal':'text-stamp'" x-text="analyzeResult?.snapshot?.integrity_verified?'✓ Verified':'✗ Failed'"></dd>
+      </dl>
+    </div>
+
+    <div x-show="!analyzeResult && !loading.analyze" x-cloak class="doc-card p-7 mt-7 fade">
+      <p class="eyebrow eyebrow-red mb-2">Note to the reader</p>
+      <p class="text-sm leading-relaxed" style="color:var(--ink-2)">
+        The agent will retrieve the relevant article, query controls in the inventory, and route every response through the Kill Switch before it touches the language model. Conclusions are sealed with a SHA-256 signature. Tampering breaks the seal.<span class="cite">[2]</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- RIGHT: Results -->
+  <div class="col-span-12 lg:col-span-7 space-y-7">
+
+    <!-- Loading -->
+    <div x-show="loading.analyze" x-cloak class="doc-card p-8 space-y-3">
+      <div class="skel h-3 w-1/4"></div>
+      <div class="skel h-5 w-1/2"></div>
+      <div class="skel h-3 w-full mt-4"></div>
+      <div class="skel h-3 w-5/6"></div>
+      <div class="skel h-3 w-2/3"></div>
+    </div>
+
+    <!-- Reasoning -->
+    <div x-show="analyzeResult" x-cloak class="doc-card p-8 fade">
+      <div class="flex items-baseline justify-between mb-2">
+        <p class="eyebrow">Exhibit A · Agent reasoning</p>
+        <span class="mono text-[10px] text-soft" x-text="(analyzeResult?.agent_steps?.length||0)+' steps recorded'"></span>
+      </div>
+      <h3 class="display text-2xl font-light mb-6 tracking-tight">The chain of thought</h3>
+      <div class="docline space-y-5">
+        <template x-for="(step, i) in analyzeResult?.agent_steps || []" :key="i">
+          <div class="relative">
+            <div class="docline-dot" :style="`top:${i===0?2:6}px`"></div>
+            <div class="flex items-baseline gap-2 mb-2 flex-wrap">
+              <span class="mono text-[10px] uppercase tracking-widest text-soft" x-text="'Step '+String(step.step_number).padStart(2,'0')+' ·'"></span>
+              <span class="tag tag-low" x-text="step.action"></span>
+              <span x-show="step.observation?.startsWith('[BLOCKED')" class="tag tag-high">Redacted by Kill Switch</span>
             </div>
-            <svg x-show="i < flowNodes.length-1" class="text-slate-600 shrink-0" width="22" height="22" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M5 12h14m-7-7 7 7-7 7"/></svg>
+            <p class="text-[15px] leading-relaxed mb-2" style="color:var(--ink-2)" x-text="step.thought"></p>
+            <p class="mono text-[11px] line-clamp-2" style="color:var(--ink-soft)" x-text="step.observation"></p>
           </div>
         </template>
       </div>
     </div>
 
-    <!-- Regulation cards -->
-    <div class="grid sm:grid-cols-2 gap-5">
-      <div class="glass p-6">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="w-11 h-11 rounded-xl bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-xl">🇪🇺</div>
-          <div><h3 class="text-white font-bold">DORA</h3><p class="text-slate-500 text-xs">Digital Operational Resilience Act</p></div>
-        </div>
-        <div class="space-y-2.5">
-          <template x-for="a in doraArticles" :key="a">
-            <div class="flex items-start gap-2 text-xs text-slate-400">
-              <span class="text-blue-400 mt-0.5">▸</span><span x-text="a"></span>
-            </div>
-          </template>
-        </div>
+    <!-- Gaps -->
+    <div x-show="analyzeResult?.analysis?.gap_analysis?.length" x-cloak class="doc-card p-8 fade relative">
+      <div class="absolute top-6 right-6 stamp-drop">
+        <div class="stamp" style="font-size:11px;padding:4px 12px;color:var(--audit);border-color:var(--audit)">Action Required</div>
       </div>
-      <div class="glass p-6">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="w-11 h-11 rounded-xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-xl">📊</div>
-          <div><h3 class="text-white font-bold">MiFID II</h3><p class="text-slate-500 text-xs">Markets in Financial Instruments Directive</p></div>
-        </div>
-        <div class="space-y-2.5">
-          <template x-for="r in mifidReqs" :key="r">
-            <div class="flex items-start gap-2 text-xs text-slate-400">
-              <span class="text-purple-400 mt-0.5">▸</span><span x-text="r"></span>
+      <p class="eyebrow mb-2" style="color:var(--audit)">Exhibit B · Gap analysis</p>
+      <h3 class="display text-2xl font-light mb-6 tracking-tight">Findings of deficiency</h3>
+      <div class="space-y-4">
+        <template x-for="(gap, i) in analyzeResult?.analysis?.gap_analysis || []" :key="i">
+          <div class="border-l-2 pl-5 py-2" style="border-color:var(--audit)">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="display text-xl text-audit font-medium" x-text="'⁋ '+String(i+1).padStart(2,'0')"></span>
+              <span class="tag tag-partial" x-text="gap.article"></span>
+              <span class="mono text-[11px] text-soft truncate" x-text="gap.requirement"></span>
             </div>
-          </template>
-        </div>
+            <p class="text-[15px] leading-relaxed mt-2" style="color:var(--ink-2)" x-text="gap.gap"></p>
+          </div>
+        </template>
       </div>
     </div>
-  </section>
 
-</main>
+    <!-- Matched -->
+    <div x-show="analyzeResult?.analysis?.matched_controls?.length" x-cloak class="doc-card p-8 fade">
+      <p class="eyebrow mb-2" style="color:var(--seal)">Exhibit C · Controls in evidence</p>
+      <h3 class="display text-2xl font-light mb-6 tracking-tight">Verified instruments</h3>
+      <div class="divide-y" style="border-color:var(--rule)">
+        <template x-for="(ctrl, i) in analyzeResult?.analysis?.matched_controls || []" :key="i">
+          <div class="flex items-center justify-between py-3.5">
+            <div class="flex items-baseline gap-4 min-w-0">
+              <span class="mono text-[11px] text-soft" x-text="String(i+1).padStart(2,'0')+'·'"></span>
+              <span class="mono text-xs text-ink font-bold" x-text="ctrl.control_id"></span>
+              <span class="text-[15px] truncate" style="color:var(--ink-2)" x-text="ctrl.control_name"></span>
+            </div>
+            <span class="tag" :class="`tag-${ctrl.status}`" x-text="ctrl.status"></span>
+          </div>
+        </template>
+      </div>
+    </div>
 
-<!-- AUTH MODAL -->
-<div x-show="showAuth" x-cloak class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 fade" @click.self="showAuth=false">
-  <div class="glass beam p-8 w-full max-w-md" @click.stop>
-    <h2 class="text-white font-bold text-2xl mb-1 tracking-tight" x-text="authMode==='login' ? 'Welcome back' : 'Create your account'"></h2>
-    <p class="text-slate-500 text-sm mb-6" x-text="authMode==='login' ? 'Sign in to access the compliance tools' : 'Free demo access, no email verification'"></p>
-    <div class="space-y-3">
-      <template x-if="authMode==='register'">
-        <div class="grid grid-cols-2 gap-3">
-          <input x-model="authForm.first_name" placeholder="First name" class="bg-slate-950/70 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition"/>
-          <input x-model="authForm.last_name" placeholder="Last name" class="bg-slate-950/70 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition"/>
-        </div>
-      </template>
-      <input x-model="authForm.user_id" placeholder="Email" type="email"
-        class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition"/>
-      <input x-model="authForm.password" placeholder="Password" type="password"
-        @keyup.enter="submitAuth()"
-        class="w-full bg-slate-950/70 border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition"/>
-      <div x-show="authError" class="bg-red-500/10 border border-red-500/30 rounded-xl px-3.5 py-2.5 text-xs text-red-400 fade" x-text="authError"></div>
-      <button @click="submitAuth()" :disabled="loading.auth"
-        class="shimmer w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:opacity-40 text-white font-semibold py-2.5 rounded-xl transition text-sm shadow-lg shadow-indigo-500/30">
-        <span x-text="loading.auth ? 'Please wait…' : (authMode==='login' ? 'Sign in' : 'Create account')"></span>
-      </button>
-      <p class="text-center text-xs text-slate-500 pt-1">
-        <span x-text="authMode==='login' ? 'No account yet? ' : 'Already have one? '"></span>
-        <button @click="authMode=authMode==='login'?'register':'login'; authError=''" class="text-indigo-400 hover:text-indigo-300 font-medium transition" x-text="authMode==='login'?'Register':'Sign in'"></button>
+    <!-- Summary -->
+    <div x-show="analyzeResult?.analysis?.summary" x-cloak class="doc-card p-10 fade text-center bg-aged">
+      <p class="eyebrow mb-4">Executive summary · For the record</p>
+      <p class="display text-2xl font-light leading-snug max-w-2xl mx-auto" style="color:var(--ink)" x-text="'"'+analyzeResult?.analysis?.summary+'"'"></p>
+      <div class="mt-6 inline-block">
+        <div class="rule" style="width:80px;margin:0 auto 12px"></div>
+        <p class="stamp-font text-xs uppercase tracking-widest" style="color:var(--stamp-deep)">Submitted by the agent of record</p>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div x-show="!analyzeResult && !loading.analyze" class="doc-card p-12 text-center fade">
+      <p class="display text-5xl font-extralight mb-3" style="color:var(--ink-faint)">∅</p>
+      <p class="eyebrow mb-3">No exhibits filed yet</p>
+      <p class="text-[15px] leading-relaxed max-w-md mx-auto" style="color:var(--ink-soft)">
+        File a request from the form on the left. Findings, gaps, and the seal will appear here, in this column, in this order.
       </p>
     </div>
   </div>
-</div>
+</section>
 
-<!-- TOAST -->
-<div x-show="toast.show" x-cloak class="fixed bottom-6 right-6 z-50 glass px-4 py-3 fade shadow-2xl">
-  <p class="text-sm text-white" x-text="toast.msg"></p>
-</div>
+<!-- PII KILL SWITCH -->
+<section x-show="activeTab==='pii'" x-cloak class="fade grid grid-cols-12 gap-7">
+  <div class="col-span-12 lg:col-span-5">
+    <div class="doc-card p-8 relative">
+      <div class="absolute -top-5 -right-3 stamp-drop">
+        <div class="stamp" style="color:var(--stamp);font-size:13px">Restricted</div>
+      </div>
+      <p class="eyebrow eyebrow-red mb-2">Instrument 04 · The redactor</p>
+      <h3 class="display text-3xl font-light tracking-tight mb-1">Kill Switch console</h3>
+      <p class="text-sm mb-7" style="color:var(--ink-soft)">Paste any text. The system identifies personal data, redacts it, and either anonymises the output or blocks the request entirely.</p>
 
-<!-- FOOTER -->
-<footer class="border-t border-white/5 py-10 mt-12">
-  <div class="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-    <div class="flex items-center gap-2">
-      <div class="w-6 h-6 rounded-md bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold">C²</div>
-      <span>Compliance as Code, a RegTech demonstration</span>
+      <div class="space-y-5">
+        <div>
+          <label class="field-label">Specimen text</label>
+          <textarea x-model="piiForm.text" rows="5" class="field-box field-mono"></textarea>
+        </div>
+        <div>
+          <label class="field-label">Clearance of the inquirer</label>
+          <div class="grid grid-cols-3 gap-0 -mx-0">
+            <template x-for="(lvl,i) in clearanceLevels" :key="lvl.id">
+              <button @click="piiForm.clearance_level=lvl.id"
+                :class="piiForm.clearance_level===lvl.id ? 'bg-ink text-paper' : 'bg-card hover:bg-aged'"
+                class="border border-ink px-3 py-3 text-left transition" :style="`border-right-width:${i===2?'1.5px':'0'};border-left-width:1.5px;color:${piiForm.clearance_level===lvl.id?'var(--paper)':'var(--ink)'}`">
+                <span class="mono text-[10px] uppercase tracking-widest font-bold" x-text="lvl.label"></span>
+                <span class="block text-[11px] mt-0.5 opacity-70" x-text="lvl.hint"></span>
+              </button>
+            </template>
+          </div>
+        </div>
+        <button @click="runPiiScan()" :disabled="loading.pii || !token" class="btn-ink w-full flex items-center justify-center gap-3">
+          <svg x-show="loading.pii" class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity=".3"/>
+            <path d="M4 12a8 8 0 018-8" stroke="currentColor" stroke-width="3" fill="none"/>
+          </svg>
+          <span x-text="loading.pii ? 'Scanning…' : 'Engage Kill Switch'"></span>
+        </button>
+        <p x-show="!token" class="mono text-[11px] text-stamp text-center mt-1 uppercase tracking-widest">Sign in required</p>
+      </div>
     </div>
-    <div class="flex items-center gap-5">
-      <span class="mono text-slate-600">FastAPI · SQLAlchemy · MCP · ReAct</span>
-      <a href="/docs" target="_blank" class="text-indigo-400 hover:text-indigo-300 transition flex items-center gap-1">
-        API Docs <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
-      </a>
+
+    <!-- Method note -->
+    <div class="doc-card p-7 mt-7">
+      <p class="eyebrow mb-3">Method · The four phases</p>
+      <ol class="space-y-4 mt-4">
+        <template x-for="(s,i) in piiSteps" :key="i">
+          <li class="flex gap-4">
+            <span class="display text-2xl font-light text-stamp leading-none" x-text="String(i+1).padStart(2,'0')"></span>
+            <div>
+              <p class="display text-[15px] font-medium mb-0.5" x-text="s.title"></p>
+              <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft)" x-text="s.desc"></p>
+            </div>
+          </li>
+        </template>
+      </ol>
     </div>
   </div>
+
+  <div class="col-span-12 lg:col-span-7 space-y-7">
+    <div x-show="piiResult" x-cloak class="doc-card p-8 fade relative">
+      <div class="absolute -top-5 right-7 stamp-drop" x-show="piiResult?.access_blocked">
+        <div class="stamp" style="font-size:14px;letter-spacing:.22em">Blocked</div>
+      </div>
+      <div class="absolute -top-5 right-7 stamp-drop" x-show="!piiResult?.access_blocked && piiResult?.pii_found">
+        <div class="stamp" style="color:var(--audit);border-color:var(--audit);font-size:14px;letter-spacing:.22em">Redacted</div>
+      </div>
+      <div class="absolute -top-5 right-7 stamp-drop" x-show="piiResult && !piiResult?.pii_found">
+        <div class="stamp" style="color:var(--seal);border-color:var(--seal);font-size:14px;letter-spacing:.22em">Clear</div>
+      </div>
+
+      <p class="eyebrow mb-2" :class="piiResult?.access_blocked?'eyebrow-red':''">Determination · Issued</p>
+      <h3 class="display text-3xl font-light tracking-tight mb-1" x-text="piiResult?.access_blocked ? 'Access denied' : piiResult?.pii_found ? 'Personal data found' : 'No personal data'"></h3>
+      <p class="text-sm mb-7" style="color:var(--ink-soft)" x-text="piiResult?.kill_switch_message || (piiResult?.pii_found ? `${piiResult?.entity_count} entit${piiResult?.entity_count===1?'y':'ies'} found and replaced with redaction tokens.` : 'No personal identifiers were detected in the specimen.')"></p>
+
+      <div class="grid grid-cols-3 gap-0 mb-7 border-y border-rule">
+        <div class="p-5 border-r border-rule">
+          <p class="eyebrow mb-2">Entities</p>
+          <p class="numeral text-5xl" x-text="String(piiResult?.entity_count||0)"></p>
+        </div>
+        <div class="p-5 border-r border-rule">
+          <p class="eyebrow mb-2">Risk grade</p>
+          <span class="tag mt-1" :class="`tag-${(piiResult?.risk_level||'low').toLowerCase()}`" x-text="piiResult?.risk_level||'NONE'"></span>
+        </div>
+        <div class="p-5">
+          <p class="eyebrow mb-2">Categories</p>
+          <p class="mono text-[12px] font-bold uppercase tracking-wider leading-tight" x-text="(piiResult?.entity_types||[]).join(' · ')||'none'"></p>
+        </div>
+      </div>
+
+      <div x-show="piiResult?.anonymized_text">
+        <div class="flex items-center justify-between mb-3">
+          <p class="eyebrow">Specimen after redaction</p>
+          <button @click="copyText(piiResult?.anonymized_text)" class="mono text-[11px] underline text-stamp" x-text="copyLabel"></button>
+        </div>
+        <div class="border-l-4 border-ink pl-4 py-3 bg-aged">
+          <pre class="text-[15px] leading-relaxed" style="color:var(--ink);font-family:'Newsreader',serif;font-style:italic" x-text="piiResult?.anonymized_text"></pre>
+        </div>
+      </div>
+
+      <div x-show="piiResult?.access_blocked">
+        <p class="eyebrow mb-3">Specimen withheld</p>
+        <div class="border-l-4 pl-4 py-3 bg-aged" style="border-color:var(--stamp)">
+          <p class="mono text-[13px]" style="color:var(--stamp-deep)">
+            <span class="redact">████████████████████████████████████</span><br>
+            <span class="redact">██████████████████</span>&nbsp;<span class="redact">█████████</span>
+          </p>
+          <p class="text-[13px] mt-3 italic" style="color:var(--ink-soft)">High risk personal data detected. Escalate to Data Protection Officer.</p>
+        </div>
+      </div>
+    </div>
+
+    <div x-show="!piiResult && !loading.pii" x-cloak class="doc-card p-12 text-center fade">
+      <p class="display text-5xl font-extralight mb-3" style="color:var(--ink-faint)">⌛</p>
+      <p class="eyebrow mb-3">Awaiting specimen</p>
+      <p class="text-[15px] leading-relaxed max-w-md mx-auto" style="color:var(--ink-soft)">
+        Submit any text on the left. The Kill Switch will identify personal data and either redact it or refuse to proceed.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- CONTROLS -->
+<section x-show="activeTab==='controls'" x-cloak class="fade">
+
+  <div class="doc-card p-7 mb-7">
+    <div class="flex flex-col sm:flex-row gap-4 sm:items-end">
+      <div class="flex-1">
+        <label class="field-label">Filter by article</label>
+        <input x-model.debounce.300ms="controlFilter.article" placeholder="e.g. Art.9" class="field"/>
+      </div>
+      <div class="flex-1">
+        <label class="field-label">Status</label>
+        <select x-model="controlFilter.status" class="field">
+          <option value="">All</option>
+          <option value="implemented">Implemented</option>
+          <option value="partial">Partial</option>
+          <option value="gap">Gap</option>
+        </select>
+      </div>
+      <div class="flex-1">
+        <label class="field-label">Control type</label>
+        <select x-model="controlFilter.type" class="field">
+          <option value="">All</option>
+          <option value="preventive">Preventive</option>
+          <option value="detective">Detective</option>
+          <option value="corrective">Corrective</option>
+        </select>
+      </div>
+      <button @click="loadControls()" :disabled="!token" class="btn-ink">Apply</button>
+    </div>
+  </div>
+
+  <div x-show="loading.controls" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <template x-for="i in 6" :key="i">
+      <div class="doc-card p-6 space-y-3">
+        <div class="skel h-3 w-1/3"></div>
+        <div class="skel h-5 w-2/3"></div>
+        <div class="skel h-3 w-full"></div>
+        <div class="skel h-3 w-5/6"></div>
+      </div>
+    </template>
+  </div>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    <template x-for="(ctrl,i) in controls" :key="ctrl.id">
+      <article class="doc-card p-6 relative hover:bg-aged transition group">
+        <div class="flex items-baseline justify-between mb-3">
+          <span class="mono text-xs font-bold uppercase tracking-widest text-stamp" x-text="ctrl.id"></span>
+          <span class="mono text-[10px] text-soft" x-text="'rev. '+ctrl.version"></span>
+        </div>
+        <h3 class="display text-xl font-medium leading-snug mb-2" x-text="ctrl.name"></h3>
+        <p class="text-[13px] leading-relaxed line-clamp-2 mb-4" style="color:var(--ink-2)" x-text="ctrl.description"></p>
+        <div class="flex flex-wrap gap-1.5 mb-4">
+          <template x-for="a in (ctrl.dora_articles||[])" :key="a">
+            <span class="tag tag-dora" x-text="a"></span>
+          </template>
+          <template x-for="a in (ctrl.mifid_articles||[])" :key="a">
+            <span class="tag tag-mifid" x-text="'MiFID '+a"></span>
+          </template>
+        </div>
+        <div class="rule mb-3"></div>
+        <div class="flex items-center justify-between">
+          <span class="tag" :class="`tag-${ctrl.status}`" x-text="ctrl.status"></span>
+          <span class="mono text-[10px] uppercase tracking-widest" style="color:var(--ink-soft)" x-text="ctrl.control_type"></span>
+        </div>
+        <p class="mono text-[10px] mt-3" style="color:var(--ink-faint)">
+          Owner: <span class="text-ink" x-text="ctrl.owner"></span> · Reviewed <span x-text="ctrl.last_reviewed"></span>
+        </p>
+      </article>
+    </template>
+  </div>
+
+  <div x-show="!token && !loading.controls" class="doc-card p-14 text-center fade">
+    <p class="display text-5xl font-extralight mb-3" style="color:var(--ink-faint)">⌐</p>
+    <p class="eyebrow eyebrow-red mb-3">Credentials required</p>
+    <p class="text-[15px] mb-6 max-w-md mx-auto" style="color:var(--ink-soft)">Access to the control inventory is gated behind authentication.</p>
+    <button @click="showAuth=true" class="btn-ink">Sign in to view</button>
+  </div>
+
+  <div x-show="token && controls.length===0 && !loading.controls" class="doc-card p-12 text-center fade">
+    <p class="eyebrow mb-2">Empty register</p>
+    <p class="text-[15px]" style="color:var(--ink-soft)">No controls match the filters.</p>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section x-show="activeTab==='arch'" x-cloak class="fade space-y-10">
+
+  <div class="grid grid-cols-12 gap-6">
+    <div class="col-span-12 mb-2 flex items-baseline justify-between">
+      <div class="flex items-baseline gap-5">
+        <span class="secno text-4xl">IV.</span>
+        <h3 class="display text-2xl font-light tracking-tight">The mechanism</h3>
+      </div>
+      <span class="eyebrow">Schematic</span>
+    </div>
+    <div class="col-span-12"><div class="rule"></div></div>
+
+    <template x-for="(c,i) in archCards" :key="c.title">
+      <article class="col-span-12 sm:col-span-6 lg:col-span-3 doc-card p-6 hover:bg-aged transition relative">
+        <div class="flex items-baseline gap-3 mb-4">
+          <span class="display text-3xl font-light" :style="`color:${c.color}`" x-text="String(i+1).padStart(2,'0')"></span>
+          <span class="eyebrow" :style="`color:${c.color}`" x-text="c.title"></span>
+        </div>
+        <p class="text-[14px] leading-relaxed mb-4" style="color:var(--ink-2)" x-text="c.desc"></p>
+        <div class="flex flex-wrap gap-1.5">
+          <template x-for="t in c.tags" :key="t">
+            <span class="mono text-[10px] uppercase tracking-widest px-2 py-1 border" :style="`border-color:${c.color};color:${c.color}`" x-text="t"></span>
+          </template>
+        </div>
+      </article>
+    </template>
+  </div>
+
+  <!-- Flow diagram (typographic) -->
+  <div class="doc-card p-10">
+    <p class="eyebrow mb-2">Schematic V · Request flow</p>
+    <h3 class="display text-3xl font-light tracking-tight mb-7">Six stations between the query and the seal</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-stretch">
+      <template x-for="(node,i) in flowNodes" :key="i">
+        <div class="relative">
+          <div class="border-2 border-ink p-4 text-center h-full bg-card hover:bg-aged transition" :style="`border-color:${node.color||'var(--ink)'}`">
+            <p class="display text-3xl font-light mb-1" :style="`color:${node.color||'var(--ink)'}`" x-text="String(i+1).padStart(2,'0')"></p>
+            <p class="display text-[14px] font-medium leading-tight" x-text="node.label"></p>
+            <p class="mono text-[9px] uppercase tracking-widest mt-1.5" style="color:var(--ink-soft)" x-text="node.role"></p>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-12 gap-6">
+    <article class="col-span-12 lg:col-span-6 doc-card p-8 relative">
+      <div class="absolute top-6 right-6 mono text-[10px] font-bold uppercase tracking-widest" style="color:#2d4d7c">EU 2022/2554</div>
+      <div class="flex items-baseline gap-4 mb-3">
+        <span class="display text-5xl font-light" style="color:#2d4d7c">①</span>
+        <div>
+          <p class="eyebrow" style="color:#2d4d7c">Statute</p>
+          <h4 class="display text-2xl font-medium leading-tight">DORA</h4>
+          <p class="text-[13px] italic" style="color:var(--ink-soft)">Digital Operational Resilience Act</p>
+        </div>
+      </div>
+      <div class="rule my-4"></div>
+      <ul class="space-y-2 text-[14px] leading-relaxed" style="color:var(--ink-2)">
+        <li><span class="mono text-[11px] mr-2" style="color:#2d4d7c">Art. 5</span>ICT Risk Management Framework</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#2d4d7c">Art. 6</span>ICT Systems and Tools</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#2d4d7c">Art. 7</span>ICT Third Party Risk</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#2d4d7c">Art. 9</span>Protection and Prevention</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#2d4d7c">Art. 11</span>Business Continuity</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#2d4d7c">Art. 17</span>Incident Management</li>
+      </ul>
+    </article>
+    <article class="col-span-12 lg:col-span-6 doc-card p-8 relative">
+      <div class="absolute top-6 right-6 mono text-[10px] font-bold uppercase tracking-widest" style="color:#5d2d7c">2014/65/EU</div>
+      <div class="flex items-baseline gap-4 mb-3">
+        <span class="display text-5xl font-light" style="color:#5d2d7c">②</span>
+        <div>
+          <p class="eyebrow" style="color:#5d2d7c">Statute</p>
+          <h4 class="display text-2xl font-medium leading-tight">MiFID II</h4>
+          <p class="text-[13px] italic" style="color:var(--ink-soft)">Markets in Financial Instruments Directive</p>
+        </div>
+      </div>
+      <div class="rule my-4"></div>
+      <ul class="space-y-2 text-[14px] leading-relaxed" style="color:var(--ink-2)">
+        <li><span class="mono text-[11px] mr-2" style="color:#5d2d7c">Art. 16</span>Organisational Requirements</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#5d2d7c">§ 1</span>Adequate ICT infrastructure</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#5d2d7c">§ 2</span>Effective risk monitoring controls</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#5d2d7c">§ 3</span>Business continuity for ICT disruption</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#5d2d7c">§ 4</span>Documented lines of ICT responsibility</li>
+        <li><span class="mono text-[11px] mr-2" style="color:#5d2d7c">§ 5</span>Information processing safeguards</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+</main>
+
+<!-- Footnotes / colophon -->
+<footer class="relative z-10 max-w-[1240px] mx-auto px-6 pb-10">
+  <div class="rule-double mb-7"></div>
+  <div class="grid grid-cols-12 gap-8">
+    <div class="col-span-12 lg:col-span-5">
+      <p class="eyebrow eyebrow-red mb-3">Footnotes</p>
+      <ol class="space-y-3 text-[13px] leading-relaxed" style="color:var(--ink-soft)">
+        <li><span class="mono text-[11px] mr-2 text-stamp">[1]</span>The agent is operated under a stateless JWT and routed through an in process MCP tool registry. No external services are called for inference unless explicitly configured.</li>
+        <li><span class="mono text-[11px] mr-2 text-stamp">[2]</span>Tampering with any field of a forensic snapshot recomputes a different SHA-256 digest, so the seal is detectably broken on read.</li>
+      </ol>
+    </div>
+    <div class="col-span-12 lg:col-span-4">
+      <p class="eyebrow mb-3">Colophon</p>
+      <p class="text-[13px] leading-relaxed" style="color:var(--ink-soft)">Set in <em>Fraunces</em> and <em>Newsreader</em>, with stamps in <em>Special Elite</em> and technical bits in <em>JetBrains Mono</em>. Composed in HTML, FastAPI, and SQLAlchemy.</p>
+    </div>
+    <div class="col-span-12 lg:col-span-3">
+      <p class="eyebrow mb-3">Distribution</p>
+      <p class="text-[13px] mb-1"><a class="ul" href="https://github.com/surendra-gvsr/dora-mifid-compliance" target="_blank">Source on GitHub</a></p>
+      <p class="text-[13px]"><a class="ul" href="/docs" target="_blank">API schema</a></p>
+    </div>
+  </div>
+  <div class="mt-10 flex items-center justify-between flex-wrap gap-3">
+    <p class="mono text-[10px] uppercase tracking-widest" style="color:var(--ink-faint)">© 2026 · The Compliance Dossier · A RegTech Demonstration</p>
+    <p class="mono text-[10px] uppercase tracking-widest" style="color:var(--ink-faint)">End of file · DORA/MIFID-II/2026-Q2</p>
+  </div>
 </footer>
+
+<!-- Auth modal -->
+<div x-show="showAuth" x-cloak class="modal-back fade" @click.self="showAuth=false">
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="doc-card p-9 w-full max-w-md relative" @click.stop>
+      <div class="absolute -top-5 -right-3 stamp-drop">
+        <div class="stamp" style="font-size:11px;padding:4px 12px">Credentials</div>
+      </div>
+      <p class="eyebrow mb-2" x-text="authMode==='login' ? 'Form 09 · Authentication' : 'Form 10 · Enrolment'"></p>
+      <h2 class="display text-3xl font-light tracking-tight mb-1" x-text="authMode==='login' ? 'Sign your name' : 'New to the dossier'"></h2>
+      <p class="text-[14px] mb-7" style="color:var(--ink-soft)" x-text="authMode==='login' ? 'Identify yourself to access the case files.' : 'Free enrolment. No email verification.'"></p>
+
+      <div class="space-y-5">
+        <template x-if="authMode==='register'">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="field-label">Given name</label>
+              <input x-model="authForm.first_name" class="field"/>
+            </div>
+            <div>
+              <label class="field-label">Surname</label>
+              <input x-model="authForm.last_name" class="field"/>
+            </div>
+          </div>
+        </template>
+        <div>
+          <label class="field-label">Email</label>
+          <input x-model="authForm.user_id" type="email" class="field"/>
+        </div>
+        <div>
+          <label class="field-label">Password</label>
+          <input x-model="authForm.password" type="password" @keyup.enter="submitAuth()" class="field"/>
+        </div>
+        <div x-show="authError" class="border-l-4 pl-3 py-2 fade" style="border-color:var(--stamp);background:rgba(168,35,31,.06)">
+          <p class="mono text-[11px] uppercase tracking-widest" style="color:var(--stamp)" x-text="authError"></p>
+        </div>
+        <button @click="submitAuth()" :disabled="loading.auth" class="btn-ink w-full">
+          <span x-text="loading.auth ? 'Verifying…' : (authMode==='login' ? 'Sign and enter' : 'Enrol and enter')"></span>
+        </button>
+        <p class="text-center text-[13px]" style="color:var(--ink-soft)">
+          <span x-text="authMode==='login' ? 'New here? ' : 'Already enrolled? '"></span>
+          <button @click="authMode=authMode==='login'?'register':'login'; authError=''" class="ul text-stamp" x-text="authMode==='login'?'Enrol':'Sign in'"></button>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div x-show="toast.show" x-cloak class="toast fade" x-text="toast.msg"></div>
 
 <script>
 function app(){
   return {
-    // state
     token: localStorage.getItem('token')||'',
     activeTab:'analyze',
     showAuth:false,
     authMode:'login',
     authForm:{user_id:'',password:'',first_name:'',last_name:''},
     authError:'',
-    tabRefs:{},
-    tabIndicator:{x:0,w:0},
     displayScore:0,
-    copyLabel:'Copy',
+    copyLabel:'Copy text',
     toast:{show:false,msg:''},
 
-    analyzeForm:{query:'Map our ICT controls to DORA Article 9 and identify any gaps',regulation:'DORA',clearance_level:'COMPLIANCE_OFFICER'},
+    analyzeForm:{query:'Map our ICT controls to DORA Article 9 and identify any gaps.',regulation:'DORA',clearance_level:'COMPLIANCE_OFFICER'},
     analyzeResult:null,
 
-    piiForm:{text:'Contact John Smith at j.smith@barclays.com or call 020 7946 0958. Account number IBAN GB29NWBK60161331926819',clearance_level:'ANALYST'},
+    piiForm:{text:'Contact John Smith at j.smith@barclays.com or call 020 7946 0958. Account number IBAN GB29NWBK60161331926819 for the next tranche.',clearance_level:'ANALYST'},
     piiResult:null,
 
     controls:[],
     controlFilter:{article:'',status:'',type:''},
     loading:{analyze:false,pii:false,controls:false,auth:false},
 
-    // static content
     tabs:[
-      {id:'analyze',label:'Analyzer',icon:'⚡'},
-      {id:'pii',label:'PII Kill Switch',icon:'🛡'},
-      {id:'controls',label:'ICT Controls',icon:'📋'},
-      {id:'arch',label:'Architecture',icon:'🏗'},
+      {id:'analyze',label:'Analyzer'},
+      {id:'pii',label:'Kill Switch'},
+      {id:'controls',label:'Controls'},
+      {id:'arch',label:'Mechanism'},
     ],
-    heroFeatures:[
-      {icon:'⚡',title:'ReAct Agent Loop',desc:'Reason, act, observe, repeat'},
-      {icon:'🔌',title:'MCP Tool Registry',desc:'Standard tool protocol'},
-      {icon:'🛡',title:'PII Kill Switch',desc:'Block before LLM context'},
-      {icon:'🔏',title:'Signed Snapshots',desc:'SHA 256 immutable receipts'},
+    pillars:[
+      {tag:'Reasoning',title:'A ReAct agent that thinks aloud',desc:'Reads the regulation, queries your controls, and shows its reasoning step by step. No black box. Every move is on the record.'},
+      {tag:'Protocol',title:'A registry of tools, not endpoints',desc:'An in process Model Context Protocol registry. The agent invokes named tools to fetch articles and query the control inventory.'},
+      {tag:'Defence',title:'A redactor stationed at the gate',desc:'Every retrieval is searched for personal data. High risk material is held back. Anything that passes is anonymised before the model sees it.'},
+      {tag:'Provenance',title:'A seal that breaks on tampering',desc:'Every finding is sealed with a SHA-256 signature over a canonical representation. Auditors can verify the document was not altered.'},
     ],
     clearanceLevels:[
-      {id:'ANALYST',label:'Analyst',hint:'No PII access'},
-      {id:'COMPLIANCE_OFFICER',label:'Officer',hint:'Medium PII'},
-      {id:'DPO',label:'DPO',hint:'Full access'},
+      {id:'ANALYST',label:'Analyst',hint:'No personal data'},
+      {id:'COMPLIANCE_OFFICER',label:'Officer',hint:'Medium grade access'},
+      {id:'DPO',label:'DPO',hint:'Full access, anonymised'},
     ],
     piiSteps:[
-      {title:'Regex phase',desc:'Compiled patterns scan for IBAN, email, phone, national ID, account numbers. Zero LLM cost.'},
-      {title:'Name detection',desc:'Heuristic match in contact field contexts, with optional LLM fallback for ambiguous cases.'},
-      {title:'Clearance enforcement',desc:'Detected risk level compared against the user clearance matrix. Blocks if insufficient.'},
-      {title:'Context injection',desc:'Anonymised text or a sanitised block notice is what the LLM sees. Raw PII never reaches the model.'},
+      {title:'Pattern survey',desc:'Compiled regular expressions sweep for IBAN, account numbers, emails, phone, and national identifiers. Local. Fast. Zero model cost.'},
+      {title:'Name detection',desc:'Heuristic match in contact field contexts. An LLM disambiguator stands by for ambiguous specimens, with a fail open policy on availability.'},
+      {title:'Clearance check',desc:'The grade of detected risk is compared against the inquirer\'s clearance. Insufficient clearance triggers a Kill Switch event.'},
+      {title:'Context injection',desc:'The model receives either anonymised text or a sanitised block notice. Raw personal data is never written into the LLM context.'},
     ],
     archCards:[
-      {icon:'🤖',title:'ReAct Agent',desc:'Multi step Reason and Act loop. The LLM picks the next MCP tool, observes the result, then iterates until it can answer.',tags:['LLM','Tool use','Loop'],bg:'bg-indigo-500/15 border border-indigo-500/30 text-indigo-400'},
-      {icon:'🔌',title:'MCP Registry',desc:'In process Model Context Protocol registry. The agent invokes tools by name: query_controls_db, get_dora_article, store_forensic_snapshot.',tags:['MCP','Tools','Protocol'],bg:'bg-purple-500/15 border border-purple-500/30 text-purple-400'},
-      {icon:'🛡',title:'PII Kill Switch',desc:'Regex plus heuristic detection fires between every tool result and the LLM context. Blocks high risk data for Analyst clearance; anonymises for others.',tags:['Security','PII','GDPR'],bg:'bg-red-500/15 border border-red-500/30 text-red-400'},
-      {icon:'🔏',title:'Forensic Snapshot',desc:'Every analysis produces a SHA 256 signed immutable record. Any tampering changes the hash, so forgery is detectable on read.',tags:['Audit','SHA 256','Immutable'],bg:'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400'},
+      {title:'ReAct Agent',color:'#a8231f',desc:'Iterative Thought, Action, Observation loop. The agent decides which tool to call next based on what it has learned.',tags:['LLM','Loop','Tool use']},
+      {title:'MCP Registry',color:'#b8761b',desc:'Decorator based tool registry. The agent invokes tools by name: query_controls_db, get_dora_article, store_forensic_snapshot.',tags:['MCP','Protocol','Stateless']},
+      {title:'Kill Switch',color:'#2d4d7c',desc:'Regex plus heuristic detection fires between every tool result and the model context. Anonymises or blocks based on clearance.',tags:['PII','GDPR','In flight']},
+      {title:'Forensic Seal',color:'#2d5d2a',desc:'Every conclusion is wrapped in a SHA-256 digest over a canonical JSON form. Tampering breaks the seal detectably.',tags:['Audit','Hash','Immutable']},
     ],
     flowNodes:[
-      {icon:'👤',label:'User Query',color:'bg-slate-800/70 border-white/10'},
-      {icon:'🤖',label:'ReAct Agent',color:'bg-indigo-500/15 border-indigo-500/30'},
-      {icon:'🔌',label:'MCP Tools',color:'bg-purple-500/15 border-purple-500/30'},
-      {icon:'🛡',label:'PII Guard',color:'bg-red-500/15 border-red-500/30'},
-      {icon:'💡',label:'LLM Context',color:'bg-amber-500/15 border-amber-500/30'},
-      {icon:'🔏',label:'Signed Snapshot',color:'bg-emerald-500/15 border-emerald-500/30'},
-    ],
-    doraArticles:[
-      'Art. 5: ICT Risk Management Framework',
-      'Art. 6: ICT Systems and Tools',
-      'Art. 7: ICT Third Party Risk',
-      'Art. 9: Protection and Prevention',
-      'Art. 11: Business Continuity',
-      'Art. 17: Incident Management',
-    ],
-    mifidReqs:[
-      'Art. 16: Organisational Requirements',
-      'Adequate ICT infrastructure',
-      'Effective risk monitoring controls',
-      'Business continuity for ICT disruption',
-      'Documented lines of ICT responsibility',
-      'Information processing safeguards',
+      {label:'The Query',role:'Origin',color:'#1a140e'},
+      {label:'ReAct Agent',role:'Orchestrator',color:'#a8231f'},
+      {label:'MCP Tools',role:'Retrieval',color:'#b8761b'},
+      {label:'Kill Switch',role:'Defence',color:'#2d4d7c'},
+      {label:'LLM Context',role:'Reasoning',color:'#5d2d7c'},
+      {label:'Signed Seal',role:'Verdict',color:'#2d5d2a'},
     ],
 
     init(){
-      this.$nextTick(()=>this.updateIndicator());
-      window.addEventListener('resize',()=>this.updateIndicator());
-      this.$watch('activeTab',()=>{
-        this.$nextTick(()=>this.updateIndicator());
-        if(this.activeTab==='controls' && this.token && !this.controls.length) this.loadControls();
-      });
       this.$watch('analyzeResult',v=>{ if(v?.analysis?.compliance_score!=null) this.animateScore(v.analysis.compliance_score); });
+      this.$watch('activeTab',v=>{ if(v==='controls' && this.token && !this.controls.length) this.loadControls(); });
     },
 
-    setTab(id,e){
-      this.activeTab=id;
-    },
-
-    updateIndicator(){
-      const el=this.tabRefs[this.activeTab];
-      if(!el) return;
-      const parent=el.parentElement;
-      const pRect=parent.getBoundingClientRect();
-      const eRect=el.getBoundingClientRect();
-      this.tabIndicator={x:eRect.left-pRect.left-4,w:eRect.width};
-    },
-
-    scrollToMain(){ document.getElementById('mainContent')?.scrollIntoView({behavior:'smooth',block:'start'}); },
+    scrollMain(){ document.getElementById('case')?.scrollIntoView({behavior:'smooth',block:'start'}); },
 
     showToast(msg){ this.toast={show:true,msg}; setTimeout(()=>this.toast.show=false,2400); },
 
     copyText(t){
       navigator.clipboard?.writeText(t||'');
-      this.copyLabel='Copied';
-      setTimeout(()=>this.copyLabel='Copy',1500);
+      this.copyLabel='Copied to clipboard';
+      setTimeout(()=>this.copyLabel='Copy text',1500);
     },
 
     animateScore(target){
-      const start=this.displayScore, dur=1500, t0=performance.now();
+      const start=this.displayScore, dur=1400, t0=performance.now();
       const ease=p=>1-Math.pow(1-p,3);
       const step=now=>{
         const p=Math.min((now-t0)/dur,1);
@@ -883,7 +1067,7 @@ function app(){
         const res=await this.api(ep,{method:'POST',body:JSON.stringify(body)});
         this.token=res.token; localStorage.setItem('token',res.token);
         this.showAuth=false;
-        this.showToast(this.authMode==='login'?'Welcome back':'Account created');
+        this.showToast(this.authMode==='login'?'Welcome back to the dossier':'Enrolment complete');
         if(this.activeTab==='controls') this.loadControls();
       }catch(e){ this.authError=e.message; }
       finally{ this.loading.auth=false; }
@@ -919,10 +1103,8 @@ function app(){
       finally{ this.loading.controls=false; }
     },
 
-    scoreColor(s){ return s==null ? 'text-slate-400' : s>=80?'text-emerald-400':s>=60?'text-amber-400':'text-red-400'; },
-    scoreHex(s){ return s==null ? '#7c83a3' : s>=80?'#10b981':s>=60?'#f59e0b':'#ef4444'; },
-    scoreLabel(s){ return s==null ? '' : s>=80?'Strong':s>=60?'Partial':'Gaps'; },
-    scoreChipClass(s){ return s==null ? 'chip-low' : s>=80?'chip-implemented':s>=60?'chip-partial':'chip-gap'; },
+    scoreColor(s){ return s==null ? 'text-soft' : s>=80?'text-seal':s>=60?'text-audit':'text-stamp'; },
+    scoreLabel(s){ return s==null ? '' : s>=80?'Substantial conformity':s>=60?'Partial conformity':'Material deficiency'; },
   };
 }
 </script>
