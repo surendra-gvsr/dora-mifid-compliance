@@ -2,18 +2,17 @@ import logging
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 load_dotenv()
 
-from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, HTMLResponse
 
 from database import init_db, SessionLocal
-from auth import register_user, login_user, get_current_user
+from auth import register_user, login_user
 from compliance import compliance_router
 from compliance.models import seed_ict_controls
 
@@ -57,14 +56,20 @@ async def startup_event():
         raise
 
 
-_static = Path(__file__).parent / "static"
-if _static.exists():
-    app.mount("/static", StaticFiles(directory=str(_static)), name="static")
+# ── Static UI ────────────────────────────────────────────────────────────────
+# Serve HTML directly (no StaticFiles mount — safe for serverless deployments)
+
+_HTML_PATH = Path(__file__).parent / "static" / "index.html"
+
 
 @app.get("/", include_in_schema=False)
 async def serve_ui():
-    return FileResponse(str(_static / "index.html"))
+    if _HTML_PATH.exists():
+        return FileResponse(str(_HTML_PATH), media_type="text/html")
+    return HTMLResponse("<h1>Dashboard not found</h1>", status_code=404)
 
+
+# ── Health ────────────────────────────────────────────────────────────────────
 @app.get("/health")
 async def health():
     return {
@@ -74,9 +79,7 @@ async def health():
     }
 
 
-# Auth
+# ── Routes ────────────────────────────────────────────────────────────────────
 app.post("/api/auth/register")(register_user)
 app.post("/api/auth/login")(login_user)
-
-# Compliance module
 app.include_router(compliance_router)
